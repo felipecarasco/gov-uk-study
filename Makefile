@@ -52,12 +52,8 @@ web-run: ## Sobe o front-end Flask em :5000
 web-test: ## Roda os testes do front-end
 	cd web && env -u VIRTUAL_ENV uv run pytest
 
-dev: db-up assets ## Sobe tudo: banco, API e front-end
-	@echo "Abrindo dois processos. Ctrl+C encerra ambos."
-	@trap 'kill 0' EXIT; \
-	 (cd api && ./mvnw -q spring-boot:run) & \
-	 (sleep 25 && cd web && env -u VIRTUAL_ENV uv run flask --app app:create_app run --debug --port 5000) & \
-	 wait
+dev: db-up assets ## Sobe tudo: banco, API e front-end (Ctrl+C encerra os dois)
+	@./scripts/dev.sh
 
 test: ## Roda as duas suítes de teste
 	cd api && ./mvnw verify
