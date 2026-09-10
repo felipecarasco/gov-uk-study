@@ -35,6 +35,13 @@
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
 
+    <!-- A linha 3.x do springdoc é a de Spring Boot 4; a 2.x é para Boot 3. -->
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>3.1.1</version>
+    </dependency>
+
     <!--
       ARMADILHA DO BOOT 4: a auto-configuração do Flyway saiu do
       spring-boot-autoconfigure e foi para o módulo dedicado spring-boot-flyway.

@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help db-up db-down db-shell api-run api-test
+.PHONY: help db-up db-down db-shell api-run api-test openapi
 
 # O JDK é gerenciado pelo SDKMAN, que só é carregado em shells interativos.
 # Sem isto, `make api-test` falha com "java: command not found" quando rodado
@@ -28,3 +28,9 @@ api-run: db-up ## Sobe a API Spring Boot em :8080
 
 api-test: ## Roda os testes da API (unitários + integração em container)
 	cd api && ./mvnw verify
+
+openapi: ## Regrava docs/openapi.json a partir da API em execução
+	@mkdir -p docs
+	@echo "Requer a API rodando (make api-run) em outro terminal."
+	curl -sf localhost:8080/v3/api-docs | python3 -m json.tool > docs/openapi.json
+	@echo "docs/openapi.json atualizado."
