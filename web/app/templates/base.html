@@ -1,0 +1,34 @@
+{% extends "govuk_frontend_jinja/template.html" %}
+
+{% set assetPath = url_for('static', filename='govuk/assets') %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='govuk/govuk-frontend.min.css') }}">
+{% endblock %}
+
+{% block header %}
+  {{ govukHeader({}) }}
+  {{ govukServiceNavigation({
+    'serviceName': config['SERVICE_NAME'],
+    'serviceUrl': url_for('main.index')
+  }) }}
+{% endblock %}
+
+{% block footer %}
+  {{ govukFooter({
+    'meta': {
+      'items': [
+        {'href': '#', 'text': 'Accessibility statement'},
+        {'href': '#', 'text': 'Cookies'},
+        {'href': '#', 'text': 'Privacy'}
+      ]
+    }
+  }) }}
+{% endblock %}
+
+{% block bodyEnd %}
+  <script type="module">
+    import { initAll } from "{{ url_for('static', filename='govuk/govuk-frontend.min.js') }}";
+    initAll();
+  </script>
+{% endblock %}

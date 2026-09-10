@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{%- from 'govuk_frontend_jinja/components/button/macro.html' import govukButton -%}
+
+{% block pageTitle %}Search the land register – GOV.UK{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+
+    <h1 class="govuk-heading-xl">Search the land register</h1>
+
+    <p class="govuk-body-l">
+      Find out who owns a property in England and Wales, and order a copy of the register.
+    </p>
+
+    <p class="govuk-body">Use this service to:</p>
+
+    <ul class="govuk-list govuk-list--bullet">
+      <li>look up a property by its title number</li>
+      <li>see the registered owners and any charges on the property</li>
+      <li>order an official copy of the register for £3</li>
+    </ul>
+
+    {{ govukButton({
+      'text': 'Start now',
+      'href': url_for('search.title_number'),
+      'isStartButton': true
+    }) }}
+
+    <h2 class="govuk-heading-m">Before you start</h2>
+
+    <p class="govuk-body">
+      You will need the title number of the property, for example SGL123456.
+    </p>
+
+    <div class="govuk-inset-text">
+      This is a study project. All property data shown is fictional.
+    </div>
+
+  </div>
+</div>
+{% endblock %}

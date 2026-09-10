@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help db-up db-down db-shell api-run api-test openapi
+.PHONY: help db-up db-down db-shell api-run api-test openapi web-install assets web-run web-test
 
 # O JDK é gerenciado pelo SDKMAN, que só é carregado em shells interativos.
 # Sem isto, `make api-test` falha com "java: command not found" quando rodado
@@ -34,3 +34,20 @@ openapi: ## Regrava docs/openapi.json a partir da API em execução
 	@echo "Requer a API rodando (make api-run) em outro terminal."
 	curl -sf localhost:8080/v3/api-docs | python3 -m json.tool > docs/openapi.json
 	@echo "docs/openapi.json atualizado."
+
+web-install: ## Instala as dependências Python
+	cd web && env -u VIRTUAL_ENV uv sync
+
+assets: ## Baixa os assets do GOV.UK Frontend do npm
+	cd web && npm install --no-audit --no-fund
+	rm -rf web/app/static/govuk
+	mkdir -p web/app/static/govuk
+	cp -r web/node_modules/govuk-frontend/dist/govuk/assets web/app/static/govuk/assets
+	cp web/node_modules/govuk-frontend/dist/govuk/govuk-frontend.min.css web/app/static/govuk/
+	cp web/node_modules/govuk-frontend/dist/govuk/govuk-frontend.min.js  web/app/static/govuk/
+
+web-run: ## Sobe o front-end Flask em :5000
+	cd web && env -u VIRTUAL_ENV uv run flask --app app:create_app run --debug --port 5000
+
+web-test: ## Roda os testes do front-end
+	cd web && env -u VIRTUAL_ENV uv run pytest

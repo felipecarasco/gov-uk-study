@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{%- from 'govuk_frontend_jinja/components/back-link/macro.html' import govukBackLink -%}
+{%- from 'govuk_frontend_jinja/components/summary-list/macro.html' import govukSummaryList -%}
+
+{% block pageTitle %}Title {{ title.titleNumber }} – GOV.UK{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({'text': 'Back', 'href': url_for('search.title_number')}) }}
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+
+    <span class="govuk-caption-l">Title register summary</span>
+    <h1 class="govuk-heading-l">{{ title.titleNumber }}</h1>
+
+    {% set endereco = [title.address.line1, title.address.line2, title.address.town, title.address.postcode] | select | join('<br>') %}
+
+    {% set linhas = [
+      {'key': {'text': 'Property address'}, 'value': {'html': endereco}},
+      {'key': {'text': 'Tenure'}, 'value': {'text': title.tenure | capitalize}},
+      {'key': {'text': 'Class of title'}, 'value': {'text': title.classOfTitle}}
+    ] %}
+
+    {% if title.pricePaidPence %}
+      {% set linhas = linhas + [
+        {'key': {'text': 'Price paid'}, 'value': {'text': title.pricePaidPence | pounds}},
+        {'key': {'text': 'Date of sale'}, 'value': {'text': title.pricePaidDate}}
+      ] %}
+    {% endif %}
+
+    {{ govukSummaryList({'rows': linhas}) }}
+
+    <h2 class="govuk-heading-m">Registered proprietors</h2>
+
+    <ul class="govuk-list govuk-list--bullet">
+      {% for p in title.proprietors %}
+        <li>{{ p.name }}</li>
+      {% endfor %}
+    </ul>
+
+    <h2 class="govuk-heading-m">Charges</h2>
+
+    {% if title.charges %}
+      <table class="govuk-table">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th scope="col" class="govuk-table__header">Lender</th>
+            <th scope="col" class="govuk-table__header">Date</th>
+            <th scope="col" class="govuk-table__header govuk-table__header--numeric">Amount</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for c in title.charges %}
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">{{ c.lender }}</td>
+              <td class="govuk-table__cell">{{ c.chargeDate }}</td>
+              <td class="govuk-table__cell govuk-table__cell--numeric">{{ c.amountPence | pounds }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="govuk-body">No charges are registered against this title.</p>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
