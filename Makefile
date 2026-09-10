@@ -1,5 +1,14 @@
 .DEFAULT_GOAL := help
-.PHONY: help db-up db-down db-shell
+.PHONY: help db-up db-down db-shell api-run api-test
+
+# O JDK é gerenciado pelo SDKMAN, que só é carregado em shells interativos.
+# Sem isto, `make api-test` falha com "java: command not found" quando rodado
+# de um script, de uma IDE ou de um hook de git.
+SDKMAN_JAVA := $(HOME)/.sdkman/candidates/java/current
+ifneq ($(wildcard $(SDKMAN_JAVA)/bin/java),)
+export JAVA_HOME := $(SDKMAN_JAVA)
+export PATH := $(SDKMAN_JAVA)/bin:$(PATH)
+endif
 
 help: ## Lista os alvos disponíveis
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -13,3 +22,9 @@ db-down: ## Derruba o PostgreSQL (mantém o volume)
 
 db-shell: ## Abre um psql no banco
 	docker compose exec postgres psql -U land_registry -d land_registry
+
+api-run: db-up ## Sobe a API Spring Boot em :8080
+	cd api && ./mvnw spring-boot:run
+
+api-test: db-up ## Roda os testes da API
+	cd api && ./mvnw test
