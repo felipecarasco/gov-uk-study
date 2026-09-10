@@ -1,0 +1,39 @@
+# Equivalente ao .github/workflows/ci.yml, no formato do GitLab CI.
+#
+# Este arquivo NÃO é executado por nenhum runner: o repositório vive no GitHub.
+# Ele existe porque o ambiente-alvo (HMLR) usa GitLab self-hosted com Jenkins,
+# e expressar o mesmo pipeline nos dois formatos documenta o entendimento
+# daquele ambiente.
+
+stages:
+  - test
+
+api:
+  stage: test
+  image: eclipse-temurin:25-jdk
+  services:
+    - name: docker:27-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    TESTCONTAINERS_HOST_OVERRIDE: docker
+  cache:
+    key: maven-$CI_COMMIT_REF_SLUG
+    paths:
+      - .m2/repository
+  script:
+    - cd api
+    - ./mvnw --batch-mode -Dmaven.repo.local=../.m2/repository verify
+
+web:
+  stage: test
+  image: python:3.12-slim
+  before_script:
+    - pip install --no-cache-dir uv
+  script:
+    - cd web
+    - uv sync --all-groups
+    - uv run ruff check .
+    - uv run ruff format --check .
+    - uv run pytest --cov=app --cov-report=term-missing

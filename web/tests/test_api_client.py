@@ -34,9 +34,7 @@ def api():
 
 @respx.mock
 def test_get_title_devolve_o_json(api):
-    respx.get(f"{BASE}/api/v1/titles/SGL123456").mock(
-        return_value=httpx.Response(200, json=TITULO)
-    )
+    respx.get(f"{BASE}/api/v1/titles/SGL123456").mock(return_value=httpx.Response(200, json=TITULO))
 
     resultado = api.get_title("SGL123456")
 
@@ -71,9 +69,7 @@ def test_get_title_levanta_title_not_found_em_404(api):
 
 @respx.mock
 def test_get_title_levanta_api_error_em_500(api):
-    respx.get(f"{BASE}/api/v1/titles/SGL123456").mock(
-        return_value=httpx.Response(500, text="boom")
-    )
+    respx.get(f"{BASE}/api/v1/titles/SGL123456").mock(return_value=httpx.Response(500, text="boom"))
 
     with pytest.raises(ApiError):
         api.get_title("SGL123456")
@@ -81,9 +77,7 @@ def test_get_title_levanta_api_error_em_500(api):
 
 @respx.mock
 def test_get_title_levanta_api_error_quando_a_api_esta_fora(api):
-    respx.get(f"{BASE}/api/v1/titles/SGL123456").mock(
-        side_effect=httpx.ConnectError("recusado")
-    )
+    respx.get(f"{BASE}/api/v1/titles/SGL123456").mock(side_effect=httpx.ConnectError("recusado"))
 
     with pytest.raises(ApiError):
         api.get_title("SGL123456")

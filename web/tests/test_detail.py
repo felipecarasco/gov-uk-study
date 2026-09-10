@@ -38,9 +38,7 @@ SEM_ONUS = {
 
 @respx.mock
 def test_detalhe_mostra_os_dados_do_titulo(client):
-    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(
-        return_value=httpx.Response(200, json=TITULO)
-    )
+    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(return_value=httpx.Response(200, json=TITULO))
 
     resposta = client.get("/search/titles/SGL123457")
     assert resposta.status_code == 200
@@ -57,9 +55,7 @@ def test_detalhe_mostra_os_dados_do_titulo(client):
 
 @respx.mock
 def test_detalhe_formata_valores_em_libras(client):
-    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(
-        return_value=httpx.Response(200, json=TITULO)
-    )
+    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(return_value=httpx.Response(200, json=TITULO))
 
     texto = BeautifulSoup(
         client.get("/search/titles/SGL123457").get_data(as_text=True), "html.parser"
@@ -72,9 +68,7 @@ def test_detalhe_formata_valores_em_libras(client):
 
 @respx.mock
 def test_detalhe_lista_todos_os_proprietarios_e_onus(client):
-    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(
-        return_value=httpx.Response(200, json=TITULO)
-    )
+    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(return_value=httpx.Response(200, json=TITULO))
 
     texto = BeautifulSoup(
         client.get("/search/titles/SGL123457").get_data(as_text=True), "html.parser"
@@ -118,8 +112,21 @@ def test_titulo_inexistente_mostra_pagina_de_nao_encontrado(client):
 
 @respx.mock
 def test_api_fora_do_ar_devolve_503(client):
-    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(
-        side_effect=httpx.ConnectError("recusado")
-    )
+    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(side_effect=httpx.ConnectError("recusado"))
 
     assert client.get("/search/titles/SGL123457").status_code == 503
+
+
+@respx.mock
+def test_datas_seguem_o_estilo_do_govuk(client):
+    """O guia de estilo do GOV.UK exige '2 November 2021', não '2021-11-02'.
+    Ver https://www.gov.uk/guidance/style-guide/a-to-z#dates."""
+    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(return_value=httpx.Response(200, json=TITULO))
+
+    texto = BeautifulSoup(
+        client.get("/search/titles/SGL123457").get_data(as_text=True), "html.parser"
+    ).get_text()
+
+    assert "2 November 2021" in texto
+    assert "17 January 2024" in texto
+    assert "2021-11-02" not in texto

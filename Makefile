@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help db-up db-down db-shell api-run api-test openapi web-install assets web-run web-test
+.PHONY: help db-up db-down db-shell api-run api-test openapi web-install assets web-run web-test dev test lint
 
 # O JDK é gerenciado pelo SDKMAN, que só é carregado em shells interativos.
 # Sem isto, `make api-test` falha com "java: command not found" quando rodado
@@ -51,3 +51,18 @@ web-run: ## Sobe o front-end Flask em :5000
 
 web-test: ## Roda os testes do front-end
 	cd web && env -u VIRTUAL_ENV uv run pytest
+
+dev: db-up assets ## Sobe tudo: banco, API e front-end
+	@echo "Abrindo dois processos. Ctrl+C encerra ambos."
+	@trap 'kill 0' EXIT; \
+	 (cd api && ./mvnw -q spring-boot:run) & \
+	 (sleep 25 && cd web && env -u VIRTUAL_ENV uv run flask --app app:create_app run --debug --port 5000) & \
+	 wait
+
+test: ## Roda as duas suítes de teste
+	cd api && ./mvnw verify
+	cd web && env -u VIRTUAL_ENV uv run pytest
+
+lint: ## Roda o linter Python
+	cd web && env -u VIRTUAL_ENV uv run ruff check .
+	cd web && env -u VIRTUAL_ENV uv run ruff format --check .

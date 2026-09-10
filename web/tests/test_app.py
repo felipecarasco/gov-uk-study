@@ -5,9 +5,7 @@ def test_factory_cria_app_com_config_de_teste(app):
 
 def test_jinja_enxerga_as_macros_do_govuk(app):
     # Se o ChoiceLoader estiver mal configurado, isto levanta TemplateNotFound.
-    template = app.jinja_env.get_template(
-        "govuk_frontend_jinja/components/button/macro.html"
-    )
+    template = app.jinja_env.get_template("govuk_frontend_jinja/components/button/macro.html")
     assert template is not None
 
 

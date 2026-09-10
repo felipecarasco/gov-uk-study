@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  api:
+    name: API (Java 25)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar o JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      # Testcontainers usa o Docker já presente no runner do GitHub.
+      - name: Rodar os testes
+        working-directory: api
+        run: ./mvnw --batch-mode verify
+
+  web:
+    name: Front-end (Python 3.12)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar o uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Instalar as dependências
+        working-directory: web
+        run: uv sync --all-groups
+
+      - name: Lint
+        working-directory: web
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Rodar os testes
+        working-directory: web
+        run: uv run pytest --cov=app --cov-report=term-missing

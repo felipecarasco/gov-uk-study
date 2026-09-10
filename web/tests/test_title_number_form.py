@@ -44,9 +44,9 @@ def test_links_do_error_summary_apontam_para_campos_existentes(client):
 
     for link in links:
         alvo = link["href"].removeprefix("#")
-        assert sopa.find(id=alvo) is not None, (
-            f"o link do error summary aponta para #{alvo}, que não existe na página"
-        )
+        assert (
+            sopa.find(id=alvo) is not None
+        ), f"o link do error summary aponta para #{alvo}, que não existe na página"
 
 
 def test_formato_invalido_mostra_mensagem_especifica(client):

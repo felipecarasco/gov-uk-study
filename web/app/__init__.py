@@ -1,3 +1,5 @@
+from datetime import date
+
 from flask import Flask
 from govuk_frontend_wtf.main import WTFormsHelpers
 from jinja2 import ChoiceLoader, PackageLoader, PrefixLoader
@@ -37,6 +39,18 @@ def create_app(config_overrides=None):
             return ""
         libras, resto = divmod(int(pence), 100)
         return f"£{libras:,}.{resto:02d}"
+
+    @app.template_filter("govuk_date")
+    def format_govuk_date(iso_date):
+        """Converte '2021-11-02' em '2 November 2021'.
+
+        O guia de estilo do GOV.UK exige dia sem zero à esquerda, mês por extenso
+        e ano com quatro dígitos. Ver style guide, verbete 'dates'.
+        """
+        if not iso_date:
+            return ""
+        d = date.fromisoformat(iso_date)
+        return f"{d.day} {d.strftime('%B')} {d.year}"
 
     from app.blueprints import register_blueprints
 

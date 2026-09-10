@@ -27,7 +27,7 @@
     {% if title.pricePaidPence %}
       {% set linhas = linhas + [
         {'key': {'text': 'Price paid'}, 'value': {'text': title.pricePaidPence | pounds}},
-        {'key': {'text': 'Date of sale'}, 'value': {'text': title.pricePaidDate}}
+        {'key': {'text': 'Date of sale'}, 'value': {'text': title.pricePaidDate | govuk_date}}
       ] %}
     {% endif %}
 
@@ -56,7 +56,7 @@
           {% for c in title.charges %}
             <tr class="govuk-table__row">
               <td class="govuk-table__cell">{{ c.lender }}</td>
-              <td class="govuk-table__cell">{{ c.chargeDate }}</td>
+              <td class="govuk-table__cell">{{ c.chargeDate | govuk_date }}</td>
               <td class="govuk-table__cell govuk-table__cell--numeric">{{ c.amountPence | pounds }}</td>
             </tr>
           {% endfor %}

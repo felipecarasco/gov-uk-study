@@ -21,9 +21,7 @@ def detail(title_number):
     try:
         titulo = get_api_client().get_title(title_number)
     except TitleNotFound:
-        return render_template(
-            "search/not_found.html", title_number=title_number.upper()
-        ), 404
+        return render_template("search/not_found.html", title_number=title_number.upper()), 404
     except ApiError:
         return render_template("search/unavailable.html"), 503
 

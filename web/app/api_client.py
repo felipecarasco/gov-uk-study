@@ -31,9 +31,7 @@ class LandRegistryApiClient:
         url = f"{self._base_url}/api/v1/titles/{numero}"
 
         try:
-            resposta = httpx.get(
-                url, timeout=self._timeout, headers={"Accept": "application/json"}
-            )
+            resposta = httpx.get(url, timeout=self._timeout, headers={"Accept": "application/json"})
         except httpx.RequestError as erro:
             raise ApiError(f"Não foi possível contatar a API: {erro}") from erro
 
