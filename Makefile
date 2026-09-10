@@ -26,5 +26,5 @@ db-shell: ## Abre um psql no banco
 api-run: db-up ## Sobe a API Spring Boot em :8080
 	cd api && ./mvnw spring-boot:run
 
-api-test: db-up ## Roda os testes da API
-	cd api && ./mvnw test
+api-test: ## Roda os testes da API (unitários + integração em container)
+	cd api && ./mvnw verify
