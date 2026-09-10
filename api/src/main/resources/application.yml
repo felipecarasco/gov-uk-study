@@ -8,6 +8,9 @@ spring:
     url: jdbc:postgresql://localhost:5432/land_registry
     username: land_registry
     password: land_registry
+  mvc:
+    problemdetails:
+      enabled: true
   flyway:
     enabled: true
     locations: classpath:db/migration

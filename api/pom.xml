@@ -65,6 +65,16 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+    <!--
+      ARMADILHA DO BOOT 4: @WebMvcTest saiu do spring-boot-test-autoconfigure e
+      foi para o módulo próprio spring-boot-webmvc-test, junto com uma mudança
+      de pacote. spring-boot-starter-test sozinho não a traz mais.
+    -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webmvc-test</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-testcontainers</artifactId>
