@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: land-registry-db
+    environment:
+      POSTGRES_DB: land_registry
+      POSTGRES_USER: land_registry
+      POSTGRES_PASSWORD: land_registry
+    ports:
+      - "5432:5432"
+    volumes:
+      - land-registry-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U land_registry -d land_registry"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  land-registry-data:

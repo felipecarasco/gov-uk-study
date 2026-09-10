@@ -1,0 +1,25 @@
+# Java
+api/target/
+*.class
+
+# Python
+web/.venv/
+web/__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node (só usado para baixar os assets do GOV.UK Frontend)
+web/node_modules/
+web/app/static/govuk/
+
+# IDE / SO
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Local
+.env
