@@ -81,6 +81,33 @@ Erros seguem RFC 9457 (Problem Details):
 }
 ```
 
+## Containers e CI
+
+Cada serviço tem um `Dockerfile` multi-estágio pensado para o **OpenShift**, que
+ignora o `USER` da imagem e injeta um UID arbitrário no grupo 0. As duas imagens
+rodam sob UID arbitrário, sem root e sem porta privilegiada:
+
+```bash
+make images-run     # sobe os dois containers com --user 1000670000:0
+make images-down
+```
+
+Duas armadilhas encontradas ao fazer isso funcionar:
+
+| Sintoma | Causa | Correção |
+|---|---|---|
+| Imagem funciona no `docker run`, quebra no cluster | arquivos não pertencem ao grupo 0 | `chgrp -R 0 /app && chmod -R g=u /app` |
+| `gunicorn`: `Control server error: Permission denied: '/.gunicorn'` | sob UID arbitrário o usuário não está em `/etc/passwd`, `$HOME` vira `/` | `--no-control-socket` |
+
+O mesmo pipeline está escrito em três formatos, porque o ambiente-alvo usa GitLab
+com Jenkins e o repositório vive no GitHub:
+
+| Arquivo | Plataforma | Executa? |
+|---|---|---|
+| [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | GitHub Actions | sim |
+| [`.gitlab-ci.yml`](.gitlab-ci.yml) | GitLab CI self-hosted | não — documenta o alvo |
+| [`Jenkinsfile`](Jenkinsfile) | Jenkins declarativo | não — documenta o alvo |
+
 ## Decisões
 
 - [0001 — SQL cru em vez de JPA](docs/adr/0001-sql-cru-em-vez-de-jpa.md)

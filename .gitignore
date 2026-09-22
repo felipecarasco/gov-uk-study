@@ -8,6 +8,7 @@ web/__pycache__/
 **/__pycache__/
 *.py[cod]
 .pytest_cache/
+web/pytest-report.xml
 .coverage
 htmlcov/
 

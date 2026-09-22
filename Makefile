@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help db-up db-down db-shell api-run api-test openapi web-install assets web-run web-test dev test lint
+.PHONY: help db-up db-down db-shell api-run api-test openapi web-install assets web-run web-test dev test lint images images-run images-down
 
 # O JDK é gerenciado pelo SDKMAN, que só é carregado em shells interativos.
 # Sem isto, `make api-test` falha com "java: command not found" quando rodado
@@ -62,3 +62,26 @@ test: ## Roda as duas suítes de teste
 lint: ## Roda o linter Python
 	cd web && env -u VIRTUAL_ENV uv run ruff check .
 	cd web && env -u VIRTUAL_ENV uv run ruff format --check .
+
+# --- Imagens de container (destino: OpenShift) ---------------------------------
+# As imagens não rodam teste: quem testa é o pipeline, antes de mandar construir.
+
+IMAGE_TAG ?= local
+
+images: ## Constrói as imagens da API e do front-end
+	docker build -t land-registry-api:$(IMAGE_TAG) ./api
+	docker build -t land-registry-web:$(IMAGE_TAG) ./web
+
+# O --user simula o UID arbitrário que o OpenShift injeta: um container que só
+# funciona com o UID do Dockerfile passa aqui e quebra no cluster.
+images-run: images db-up ## Sobe os dois containers com UID arbitrário, como no OpenShift
+	docker run -d --name lr-api --network gov-study_default --user 1000670000:0 \
+	  -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/land_registry \
+	  -p 18080:8080 land-registry-api:$(IMAGE_TAG)
+	docker run -d --name lr-web --network gov-study_default --user 1000670000:0 \
+	  -e API_BASE_URL=http://lr-api:8080 -e SECRET_KEY=nao-usar-em-producao \
+	  -p 15000:5000 land-registry-web:$(IMAGE_TAG)
+	@echo "Front-end em http://localhost:15000 · API em http://localhost:18080"
+
+images-down: ## Remove os containers criados por images-run
+	-docker rm -f lr-api lr-web
