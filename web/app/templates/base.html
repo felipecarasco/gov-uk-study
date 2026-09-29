@@ -6,15 +6,21 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='govuk/govuk-frontend.min.css') }}">
 {% endblock %}
 
-{% block header %}
+{#- Override the inner blocks, not "header" and "footer" themselves: the GOV.UK
+    template wraps these in the <header> and <footer> landmarks, and replacing
+    the outer blocks throws those tags away. -#}
+{% block govukHeader %}
   {{ govukHeader({}) }}
+{% endblock %}
+
+{% block govukServiceNavigation %}
   {{ govukServiceNavigation({
     'serviceName': config['SERVICE_NAME'],
     'serviceUrl': url_for('main.index')
   }) }}
 {% endblock %}
 
-{% block footer %}
+{% block govukFooter %}
   {{ govukFooter({
     'meta': {
       'items': [
