@@ -15,6 +15,36 @@
         }
     ],
     "paths": {
+        "/api/v1/orders": {
+            "post": {
+                "tags": [
+                    "order-controller"
+                ],
+                "operationId": "create",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateOrderRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RegisterOrder"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/titles/{titleNumber}": {
             "get": {
                 "tags": [
@@ -44,10 +74,118 @@
                     }
                 }
             }
+        },
+        "/api/v1/orders/{reference}": {
+            "get": {
+                "tags": [
+                    "order-controller"
+                ],
+                "operationId": "get_1",
+                "parameters": [
+                    {
+                        "name": "reference",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RegisterOrder"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
         "schemas": {
+            "CreateOrderRequest": {
+                "type": "object",
+                "properties": {
+                    "titleNumber": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "documentType": {
+                        "type": "string",
+                        "enum": [
+                            "TITLE_REGISTER",
+                            "TITLE_PLAN"
+                        ]
+                    },
+                    "applicantName": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "applicantEmail": {
+                        "type": "string",
+                        "format": "email",
+                        "minLength": 1
+                    },
+                    "applicantAddress": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "applicantAddress",
+                    "applicantEmail",
+                    "applicantName",
+                    "documentType",
+                    "titleNumber"
+                ]
+            },
+            "RegisterOrder": {
+                "type": "object",
+                "properties": {
+                    "reference": {
+                        "type": "string"
+                    },
+                    "titleNumber": {
+                        "type": "string"
+                    },
+                    "documentType": {
+                        "type": "string",
+                        "enum": [
+                            "TITLE_REGISTER",
+                            "TITLE_PLAN"
+                        ]
+                    },
+                    "applicantName": {
+                        "type": "string"
+                    },
+                    "applicantEmail": {
+                        "type": "string"
+                    },
+                    "applicantAddress": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "PENDING_PAYMENT",
+                            "PAID"
+                        ]
+                    },
+                    "amountPence": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
             "Address": {
                 "type": "object",
                 "properties": {
