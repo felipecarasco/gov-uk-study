@@ -5,8 +5,11 @@ and templates receive plain dictionaries and know nothing about httpx or HTTP
 status codes.
 """
 
+from dataclasses import dataclass
+
 import httpx
 from flask import current_app
+from werkzeug.http import parse_options_header
 
 # RFC 9457 "type" values the API returns. They are stable identifiers, which is
 # why errors are told apart by type and not by status: a 404 from POST /orders
@@ -15,6 +18,7 @@ _PROBLEMS = "https://land-registry.study/problems/"
 _TITLE_NOT_FOUND = _PROBLEMS + "title-not-found"
 _ORDER_NOT_FOUND = _PROBLEMS + "order-not-found"
 _VALIDATION_FAILED = _PROBLEMS + "validation-failed"
+_ORDER_NOT_PAID = _PROBLEMS + "order-not-paid"
 
 
 class ApiError(Exception):
@@ -43,6 +47,20 @@ class ValidationFailed(ApiError):
     def __init__(self, errors):
         super().__init__(f"The API rejected the fields {sorted(errors)}")
         self.errors = errors
+
+
+class OrderNotPaid(ApiError):
+    """The order's document was asked for before the order was paid."""
+
+    def __init__(self, reference):
+        super().__init__(f"Order {reference} has not been paid")
+        self.reference = reference
+
+
+@dataclass(frozen=True)
+class OrderDocument:
+    content: bytes
+    filename: str
 
 
 class LandRegistryApiClient:
@@ -92,14 +110,32 @@ class LandRegistryApiClient:
         """Fetch an order by reference. Raises OrderNotFound or ApiError."""
         return self._json_or_raise(self._send("GET", f"/api/v1/orders/{reference}"))
 
-    def _send(self, method, path, **kwargs):
+    def pay_order(self, reference):
+        """Pay for an order; paying twice is harmless. Raises OrderNotFound or ApiError."""
+        return self._json_or_raise(self._send("POST", f"/api/v1/orders/{reference}/payment"))
+
+    def get_order_document(self, reference):
+        """The order's copy as a PDF. Raises OrderNotPaid, OrderNotFound or ApiError."""
+        response = self._send(
+            "GET",
+            f"/api/v1/orders/{reference}/document",
+            # The PDF when it works, Problem Details when it does not.
+            accept="application/pdf, application/problem+json",
+        )
+        if response.status_code >= 400:
+            raise _error_from(response)
+
+        _, options = parse_options_header(response.headers.get("content-disposition", ""))
+        return OrderDocument(response.content, options.get("filename") or f"{reference}.pdf")
+
+    def _send(self, method, path, accept="application/json", **kwargs):
         url = f"{self._base_url}{path}"
         try:
             return httpx.request(
                 method,
                 url,
                 timeout=self._timeout,
-                headers={"Accept": "application/json"},
+                headers={"Accept": accept},
                 **kwargs,
             )
         except httpx.RequestError as error:
@@ -130,6 +166,8 @@ def _error_from(response):
         return OrderNotFound(problem.get("reference"))
     if problem_type == _VALIDATION_FAILED:
         return ValidationFailed(problem.get("errors") or {})
+    if problem_type == _ORDER_NOT_PAID:
+        return OrderNotPaid(problem.get("reference"))
 
     return ApiError(f"The API answered {response.status_code} for {response.request.url}")
 
