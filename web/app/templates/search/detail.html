@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {%- from 'govuk_frontend_jinja/components/back-link/macro.html' import govukBackLink -%}
+{%- from 'govuk_frontend_jinja/components/button/macro.html' import govukButton -%}
 {%- from 'govuk_frontend_jinja/components/summary-list/macro.html' import govukSummaryList -%}
 
 {% block pageTitle %}Title {{ title.titleNumber }} – GOV.UK{% endblock %}
@@ -65,6 +66,8 @@
     {% else %}
       <p class="govuk-body">No charges are registered against this title.</p>
     {% endif %}
+
+    {{ govukButton({'text': 'Order a copy', 'href': url_for('order.start', title_number=title.titleNumber)}) }}
 
   </div>
 </div>

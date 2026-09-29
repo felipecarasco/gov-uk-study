@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{%- from 'govuk_frontend_jinja/components/error-summary/macro.html' import govukErrorSummary -%}
+{%- from 'govuk_frontend_jinja/components/back-link/macro.html' import govukBackLink -%}
+
+{% block pageTitle %}{% if form.errors %}Error: {% endif %}What do you want to order? – GOV.UK{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({'text': 'Back', 'href': url_for('search.detail', title_number=title_number)}) }}
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+
+    {% if form.errors %}
+      {{ govukErrorSummary(wtforms_errors(form)) }}
+    {% endif %}
+
+    <form action="" method="post" novalidate>
+      {{ form.csrf_token }}
+
+      {#- isPageHeading makes the legend the page's <h1>: one question per page,
+          so a separate heading would repeat it. -#}
+      {{ form.document_type(params={
+        'fieldset': {
+          'legend': {
+            'text': 'What do you want to order?',
+            'classes': 'govuk-fieldset__legend--l',
+            'isPageHeading': true
+          }
+        },
+        'hint': {'text': 'The register shows who owns the property. The plan shows its boundaries.'}
+      }) }}
+
+      {{ form.submit(params={'text': 'Continue'}) }}
+    </form>
+
+  </div>
+</div>
+{% endblock %}
