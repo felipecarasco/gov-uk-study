@@ -33,7 +33,7 @@
         {% for title in titles %}
           <tr class="govuk-table__row">
             <td class="govuk-table__cell">
-              <a class="govuk-link" href="{{ url_for('search.detail', title_number=title.titleNumber) }}">
+              <a class="govuk-link" href="{{ url_for('search.detail', title_number=title.titleNumber, back=this_page) }}">
                 {{- [title.address.line1, title.address.line2] | select | join(', ') -}}
               </a>
             </td>

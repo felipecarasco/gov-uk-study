@@ -7,7 +7,7 @@
 {% block pageTitle %}Title {{ title.titleNumber }} – GOV.UK{% endblock %}
 
 {% block beforeContent %}
-  {{ govukBackLink({'text': 'Back', 'href': url_for('search.title_number')}) }}
+  {{ govukBackLink({'text': 'Back', 'href': back_href}) }}
 {% endblock %}
 
 {% block content %}

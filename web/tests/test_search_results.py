@@ -44,7 +44,7 @@ def test_lists_each_title_with_a_link_to_its_detail(client):
 
     soup = page(response)
     assert "Properties in SE1 7PB" in soup.find("h1").get_text()
-    link = soup.select_one("a[href='/search/titles/TGL100001']")
+    link = soup.select_one("a[href^='/search/titles/TGL100001?']")
     assert link is not None
     assert "Flat 1, Riverside Court" in link.get_text()
     assert "Leasehold" in soup.get_text()

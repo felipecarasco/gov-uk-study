@@ -1,3 +1,5 @@
+from urllib.parse import urlsplit
+
 from flask import Blueprint, redirect, render_template, request, url_for
 
 from app import postcodes
@@ -6,6 +8,21 @@ from app.api_client import ApiError, TitleNotFound, ValidationFailed, get_api_cl
 from app.forms.search import PostcodeForm, SearchByForm, TitleNumberForm
 
 bp = Blueprint("search", __name__, url_prefix="/search")
+
+
+def _results_path_or_none(value):
+    """The value, if it is a link to this site's results page; otherwise None.
+
+    Following any link given in the URL would be an open redirect: a phishing
+    email could send people to this trusted site with a Back link that leads
+    somewhere else. Only a relative link to /search/results is accepted.
+    """
+    if not value:
+        return None
+    parts = urlsplit(value)
+    if parts.scheme or parts.netloc or parts.path != url_for("search.results"):
+        return None
+    return value
 
 
 @bp.route("", methods=["GET", "POST"])
@@ -75,6 +92,7 @@ def results():
         total=found["total"],
         previous_href=page_href(found["previousCursor"]),
         next_href=page_href(found["nextCursor"]),
+        this_page=url_for("search.results", postcode=postcode, cursor=cursor),
     )
 
 
@@ -87,4 +105,5 @@ def detail(title_number):
     except ApiError:
         return render_template("errors/503.html"), 503
 
-    return render_template("search/detail.html", title=title)
+    back_href = _results_path_or_none(request.args.get("back")) or url_for("search.title_number")
+    return render_template("search/detail.html", title=title, back_href=back_href)
