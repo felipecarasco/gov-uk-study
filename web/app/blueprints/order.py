@@ -7,6 +7,7 @@ from app.forms.order import (
     DOCUMENT_TYPE_LABELS,
     ConfirmOrderForm,
     DocumentTypeForm,
+    PaymentForm,
     YourDetailsForm,
 )
 
@@ -61,6 +62,27 @@ def requires_order(*keys):
         return wrapper
 
     return decorator
+
+
+# How many recent orders this browser remembers as its own.
+_PLACED_ORDERS_KEPT = 10
+
+
+def _remember_placed(reference):
+    placed = [ref for ref in session.get("placed_orders", []) if ref != reference]
+    session["placed_orders"] = ([reference] + placed)[:_PLACED_ORDERS_KEPT]
+
+
+def _placed_here(reference):
+    """True if this browser placed the order.
+
+    The reference is unguessable, but it sits in the URL and can leak in a
+    screenshot, a shared link or browser history. Without this check anyone
+    holding it could pay for the order, see its confirmation or download it.
+    Other people's orders get a 404, not a 403: a 403 would confirm that the
+    reference exists.
+    """
+    return reference in session.get("placed_orders", [])
 
 
 def _save(**fields):
@@ -162,7 +184,8 @@ def check_answers():
             # Clear the order before redirecting (Post/Redirect/Get): a reload
             # or a second click must not create and charge a second order.
             session.pop("order", None)
-            return redirect(url_for("order.confirmation", reference=created["reference"]))
+            _remember_placed(created["reference"])
+            return redirect(url_for("order.payment", reference=created["reference"]))
 
     return render_template(
         "order/check_answers.html",
@@ -171,6 +194,39 @@ def check_answers():
         document_label=DOCUMENT_TYPE_LABELS[order["document_type"]],
         price_pence=ORDER_PRICE_PENCE,
         errors=errors,
+    )
+
+
+@bp.route("/payment/<reference>", methods=["GET", "POST"])
+def payment(reference):
+    if not _placed_here(reference):
+        abort(404)
+
+    try:
+        order = get_api_client().get_order(reference)
+    except OrderNotFound:
+        abort(404)
+    except ApiError:
+        return render_template("search/unavailable.html"), 503
+
+    if order["status"] == "PAID":
+        return redirect(url_for("order.confirmation", reference=reference))
+
+    form = PaymentForm()
+    if form.validate_on_submit():
+        try:
+            get_api_client().pay_order(reference)
+        except OrderNotFound:
+            abort(404)
+        except ApiError:
+            return render_template("search/unavailable.html"), 503
+        return redirect(url_for("order.confirmation", reference=reference))
+
+    return render_template(
+        "order/payment.html",
+        form=form,
+        order=order,
+        document_label=DOCUMENT_TYPE_LABELS[order["documentType"]],
     )
 
 

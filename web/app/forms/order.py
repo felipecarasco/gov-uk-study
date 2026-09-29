@@ -90,3 +90,9 @@ class ConfirmOrderForm(FlaskForm):
     """
 
     submit = SubmitField("Accept and continue to payment", widget=GovSubmitInput())
+
+
+class PaymentForm(FlaskForm):
+    """Only the Pay button, but a FlaskForm so that the CSRF token is checked."""
+
+    submit = SubmitField("Pay", widget=GovSubmitInput())

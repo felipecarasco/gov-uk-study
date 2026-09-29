@@ -132,7 +132,7 @@ def test_confirming_creates_the_order_and_redirects(client):
 
     assert route.called
     assert response.status_code == 302
-    assert response.headers["Location"] == "/order/confirmation/LR-AAAA2222"
+    assert response.headers["Location"] == "/order/payment/LR-AAAA2222"
 
 
 @respx.mock
@@ -146,6 +146,17 @@ def test_confirming_clears_the_session(client):
         assert (
             "order" not in session
         ), "the session must be cleared: a reload must not create a duplicate order"
+
+
+@respx.mock
+def test_confirming_remembers_the_order_as_placed_by_this_browser(client):
+    fill_in(client)
+    respx.post(f"{BASE}/api/v1/orders").mock(return_value=httpx.Response(201, json=CREATED_ORDER))
+
+    client.post("/order/check-answers", data={})
+
+    with client.session_transaction() as session:
+        assert session["placed_orders"] == ["LR-AAAA2222"]
 
 
 @respx.mock

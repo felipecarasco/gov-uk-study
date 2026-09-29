@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{%- from 'govuk_frontend_jinja/components/summary-list/macro.html' import govukSummaryList -%}
+{%- from 'govuk_frontend_jinja/components/inset-text/macro.html' import govukInsetText -%}
+
+{% block pageTitle %}Pay for your order – GOV.UK{% endblock %}
+
+{#- No Back link: the order already exists, and check answers no longer has
+    anything to change. -#}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+
+    <h1 class="govuk-heading-l">Pay for your order</h1>
+
+    {{ govukSummaryList({'rows': [
+      {'key': {'text': 'Reference'}, 'value': {'text': order.reference}},
+      {'key': {'text': 'Document'}, 'value': {'text': document_label}},
+      {'key': {'text': 'Title number'}, 'value': {'text': order.titleNumber}},
+      {'key': {'text': 'Amount'}, 'value': {'text': order.amountPence | pounds}}
+    ]}) }}
+
+    {{ govukInsetText({'text': 'This is a simulated payment for a study project. No money will be taken and no card details are needed.'}) }}
+
+    <form action="" method="post" novalidate>
+      {{ form.csrf_token }}
+      {{ form.submit(params={'text': 'Pay ' ~ (order.amountPence | pounds)}) }}
+    </form>
+
+  </div>
+</div>
+{% endblock %}
