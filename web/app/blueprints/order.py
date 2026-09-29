@@ -179,7 +179,7 @@ def check_answers():
         except ValidationFailed as exc:
             errors = _error_list(exc.errors)
         except ApiError:
-            return render_template("search/unavailable.html"), 503
+            return render_template("errors/503.html"), 503
         else:
             # Clear the order before redirecting (Post/Redirect/Get): a reload
             # or a second click must not create and charge a second order.
@@ -207,7 +207,7 @@ def payment(reference):
     except OrderNotFound:
         abort(404)
     except ApiError:
-        return render_template("search/unavailable.html"), 503
+        return render_template("errors/503.html"), 503
 
     if order["status"] == "PAID":
         return redirect(url_for("order.confirmation", reference=reference))
@@ -219,7 +219,7 @@ def payment(reference):
         except OrderNotFound:
             abort(404)
         except ApiError:
-            return render_template("search/unavailable.html"), 503
+            return render_template("errors/503.html"), 503
         return redirect(url_for("order.confirmation", reference=reference))
 
     return render_template(
@@ -240,7 +240,7 @@ def confirmation(reference):
     except OrderNotFound:
         abort(404)
     except ApiError:
-        return render_template("search/unavailable.html"), 503
+        return render_template("errors/503.html"), 503
 
     if order["status"] != "PAID":
         return redirect(url_for("order.payment", reference=reference))
@@ -264,7 +264,7 @@ def document(reference):
     except OrderNotFound:
         abort(404)
     except ApiError:
-        return render_template("search/unavailable.html"), 503
+        return render_template("errors/503.html"), 503
 
     # Passed through untouched: the PDF is made by the API.
     response = Response(copy.content, mimetype="application/pdf")

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block pageTitle %}Page not found – GOV.UK{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-l">Page not found</h1>
+    <p class="govuk-body">If you typed the web address, check it is correct.</p>
+    <p class="govuk-body">If you pasted the web address, check you copied the entire address.</p>
+    <p class="govuk-body">
+      <a class="govuk-link" href="{{ url_for('main.index') }}">Go to the start of the service</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

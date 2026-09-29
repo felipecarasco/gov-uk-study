@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block pageTitle %}Sorry, there is a problem with the service – GOV.UK{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-l">Sorry, there is a problem with the service</h1>
+    <p class="govuk-body">Try again later.</p>
+    <p class="govuk-body">If you were ordering a copy, check your answers again before you pay.</p>
+    <p class="govuk-body">
+      <a class="govuk-link" href="{{ url_for('main.index') }}">Go to the start of the service</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -46,7 +46,7 @@ def results():
             return redirect(url_for("search.results", postcode=postcode))
         return redirect(url_for("search.postcode"))
     except ApiError:
-        return render_template("search/unavailable.html"), 503
+        return render_template("errors/503.html"), 503
 
     def page_href(page_cursor):
         return (
@@ -72,6 +72,6 @@ def detail(title_number):
     except TitleNotFound:
         return render_template("search/not_found.html", title_number=title_number.upper()), 404
     except ApiError:
-        return render_template("search/unavailable.html"), 503
+        return render_template("errors/503.html"), 503
 
     return render_template("search/detail.html", title=title)

@@ -56,4 +56,8 @@ def create_app(config_overrides=None):
 
     register_blueprints(app)
 
+    from app.errors import register_error_handlers
+
+    register_error_handlers(app)
+
     return app
