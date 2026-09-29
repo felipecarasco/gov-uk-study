@@ -1,6 +1,7 @@
+import os
 from datetime import date
 
-from flask import Flask
+from flask import Flask, send_from_directory
 from govuk_frontend_wtf.main import WTFormsHelpers
 from jinja2 import ChoiceLoader, PackageLoader, PrefixLoader
 
@@ -31,6 +32,15 @@ def create_app(config_overrides=None):
             ),
         ]
     )
+
+    # govuk-frontend.min.css asks for its fonts and images under /assets/, so the
+    # folder that `make assets` fills is served there as well. send_from_directory
+    # refuses any path that would leave the folder.
+    app.config.setdefault("GOVUK_ASSETS_DIR", os.path.join(app.static_folder, "govuk", "assets"))
+
+    @app.get("/assets/<path:filename>")
+    def govuk_assets(filename):
+        return send_from_directory(app.config["GOVUK_ASSETS_DIR"], filename)
 
     # Registers the wtforms_errors() helper used by the error summary in templates.
     WTFormsHelpers(app)
