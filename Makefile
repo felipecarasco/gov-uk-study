@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help db-up db-down db-shell api-run api-test openapi web-install assets web-run web-test dev test lint images images-run images-down
+.PHONY: help db-up db-down db-shell api-run api-test openapi web-install assets web-run web-test dev test lint a11y images images-run images-down
 
 # The JDK is managed by SDKMAN, which only loads in interactive shells.
 # Without this, `make api-test` fails with "java: command not found" when run
@@ -61,6 +61,9 @@ test: ## Run both test suites
 lint: ## Run the Python linter
 	cd web && env -u VIRTUAL_ENV uv run ruff check .
 	cd web && env -u VIRTUAL_ENV uv run ruff format --check .
+
+a11y: ## Audit every page with axe-core and check keyboard access (needs make dev running)
+	uvx --with playwright python scripts/a11y_audit.py
 
 # --- Container images (target: OpenShift) -------------------------------------
 # The images do not run tests: the pipeline tests before asking for a build.

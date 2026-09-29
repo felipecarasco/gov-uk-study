@@ -8,7 +8,8 @@
 FROM node:22-slim AS assets
 WORKDIR /assets
 COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
+# --omit=dev: axe-core is only for the accessibility audit, not for the image.
+RUN npm ci --omit=dev --no-audit --no-fund
 
 # ---------- Python dependencies ----------
 FROM python:3.12-slim AS deps

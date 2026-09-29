@@ -42,6 +42,9 @@ make test    # API (unit + integration against a real PostgreSQL) and front end
 make lint    # ruff
 ```
 
+`make a11y` audits every page and error state with axe-core (WCAG 2.2 AA) and
+checks keyboard access. It needs the service running (`make dev`).
+
 The integration tests start PostgreSQL with Testcontainers, so Docker must be
 running.
 

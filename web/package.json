@@ -4,5 +4,8 @@
   "description": "Fetches the GOV.UK Frontend assets; nothing is compiled here",
   "dependencies": {
     "govuk-frontend": "6.3.0"
+  },
+  "devDependencies": {
+    "axe-core": "4.10.3"
   }
 }
