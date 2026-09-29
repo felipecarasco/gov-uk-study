@@ -2,7 +2,7 @@
 
 {%- from 'govuk_frontend_jinja/components/panel/macro.html' import govukPanel -%}
 
-{% block pageTitle %}Order received – GOV.UK{% endblock %}
+{% block pageTitle %}Order complete – GOV.UK{% endblock %}
 
 {% block content %}
 <div class="govuk-grid-row">
@@ -12,13 +12,19 @@
         reference, which comes from the API, and keeps the template's own tags.
         Joining with ~ and |e would escape the <br> and <strong> as well. -#}
     {% set panel_html %}Your reference number<br><strong>{{ order.reference }}</strong>{% endset %}
-    {{ govukPanel({'titleText': 'Order received', 'html': panel_html}) }}
+    {{ govukPanel({'titleText': 'Order complete', 'html': panel_html}) }}
 
-    <h2 class="govuk-heading-m">What happens next</h2>
     <p class="govuk-body">
-      You need to pay {{ price_pence | pounds }} before we send your official copy.
-      Payment is the next step.
+      We have received your payment of {{ order.amountPence | pounds }}.
     </p>
+
+    <h2 class="govuk-heading-m">Your document</h2>
+    <p class="govuk-body">
+      <a class="govuk-link" href="{{ url_for('order.document', reference=order.reference) }}" download>
+        Download your copy of the {{ document_label | lower }} (PDF)
+      </a>
+    </p>
+
     <p class="govuk-body">Keep your reference number. You will need it if you contact us about this order.</p>
 
     <p class="govuk-body">

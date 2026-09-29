@@ -1,8 +1,8 @@
 import functools
 
-from flask import Blueprint, abort, redirect, render_template, request, session, url_for
+from flask import Blueprint, Response, abort, redirect, render_template, request, session, url_for
 
-from app.api_client import ApiError, OrderNotFound, ValidationFailed, get_api_client
+from app.api_client import ApiError, OrderNotFound, OrderNotPaid, ValidationFailed, get_api_client
 from app.forms.order import (
     DOCUMENT_TYPE_LABELS,
     ConfirmOrderForm,
@@ -232,6 +232,9 @@ def payment(reference):
 
 @bp.get("/confirmation/<reference>")
 def confirmation(reference):
+    if not _placed_here(reference):
+        abort(404)
+
     try:
         order = get_api_client().get_order(reference)
     except OrderNotFound:
@@ -239,7 +242,34 @@ def confirmation(reference):
     except ApiError:
         return render_template("search/unavailable.html"), 503
 
-    return render_template("order/confirmation.html", order=order, price_pence=order["amountPence"])
+    if order["status"] != "PAID":
+        return redirect(url_for("order.payment", reference=reference))
+
+    return render_template(
+        "order/confirmation.html",
+        order=order,
+        document_label=DOCUMENT_TYPE_LABELS[order["documentType"]],
+    )
+
+
+@bp.get("/<reference>/document")
+def document(reference):
+    if not _placed_here(reference):
+        abort(404)
+
+    try:
+        copy = get_api_client().get_order_document(reference)
+    except OrderNotPaid:
+        return redirect(url_for("order.payment", reference=reference))
+    except OrderNotFound:
+        abort(404)
+    except ApiError:
+        return render_template("search/unavailable.html"), 503
+
+    # Passed through untouched: the PDF is made by the API.
+    response = Response(copy.content, mimetype="application/pdf")
+    response.headers.set("Content-Disposition", "attachment", filename=copy.filename)
+    return response
 
 
 def _error_list(errors):

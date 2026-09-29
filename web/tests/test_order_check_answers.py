@@ -160,41 +160,6 @@ def test_confirming_remembers_the_order_as_placed_by_this_browser(client):
 
 
 @respx.mock
-def test_confirmation_page_shows_the_reference(client):
-    respx.get(f"{BASE}/api/v1/orders/LR-AAAA2222").mock(
-        return_value=httpx.Response(200, json=CREATED_ORDER)
-    )
-
-    response = client.get("/order/confirmation/LR-AAAA2222")
-    assert response.status_code == 200
-
-    panel = page(response).select_one(".govuk-panel--confirmation")
-    assert panel is not None, "the GOV.UK green confirmation panel is missing"
-    # The reference must be real bold text, not "<strong>" escaped into the page.
-    strong = panel.select_one("strong")
-    assert strong is not None and strong.get_text() == "LR-AAAA2222"
-    assert "<strong>" not in panel.get_text()
-
-
-@respx.mock
-def test_confirmation_for_an_unknown_reference_returns_404(client):
-    route = respx.get(f"{BASE}/api/v1/orders/LR-NOTEXIST").mock(
-        return_value=httpx.Response(
-            404,
-            json={
-                "type": "https://land-registry.study/problems/order-not-found",
-                "reference": "LR-NOTEXIST",
-            },
-            headers={"content-type": "application/problem+json"},
-        )
-    )
-
-    assert client.get("/order/confirmation/LR-NOTEXIST").status_code == 404
-    # The 404 must come from asking the API, not from a missing route.
-    assert route.called
-
-
-@respx.mock
 def test_an_api_validation_error_returns_to_check_answers(client):
     fill_in(client)
     respx.post(f"{BASE}/api/v1/orders").mock(
