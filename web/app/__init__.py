@@ -4,7 +4,7 @@ from flask import Flask
 from govuk_frontend_wtf.main import WTFormsHelpers
 from jinja2 import ChoiceLoader, PackageLoader, PrefixLoader
 
-from app.config import Config
+from app.config import DEV_ONLY_SECRET_KEY, Config
 
 
 def create_app(config_overrides=None):
@@ -13,6 +13,9 @@ def create_app(config_overrides=None):
 
     if config_overrides:
         app.config.update(config_overrides)
+
+    if not (app.debug or app.testing) and app.config["SECRET_KEY"] == DEV_ONLY_SECRET_KEY:
+        raise RuntimeError("Set SECRET_KEY: the development key must not sign real sessions")
 
     # The GOV.UK macros live inside the installed packages, not in app/templates.
     # PrefixLoader maps the path prefix ("govuk_frontend_jinja/...") to the
@@ -59,5 +62,9 @@ def create_app(config_overrides=None):
     from app.errors import register_error_handlers
 
     register_error_handlers(app)
+
+    from app.security import init_security
+
+    init_security(app)
 
     return app

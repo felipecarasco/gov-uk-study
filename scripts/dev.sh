@@ -44,7 +44,7 @@ for _ in $(seq 1 120); do
 done
 
 echo "Front -> http://localhost:5000"
-( cd "$ROOT/web" && exec env -u VIRTUAL_ENV uv run flask --app app:create_app run --port 5000 ) &
+( cd "$ROOT/web" && exec env -u VIRTUAL_ENV uv run flask --app app:create_app run --debug --port 5000 ) &
 PIDS+=($!)
 
 wait
