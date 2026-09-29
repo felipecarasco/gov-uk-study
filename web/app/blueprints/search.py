@@ -1,8 +1,8 @@
-from flask import Blueprint, abort, redirect, render_template, url_for
+from flask import Blueprint, redirect, render_template, request, url_for
 
 from app import postcodes
 
-from app.api_client import ApiError, TitleNotFound, get_api_client
+from app.api_client import ApiError, TitleNotFound, ValidationFailed, get_api_client
 from app.forms.search import PostcodeForm, TitleNumberForm
 
 bp = Blueprint("search", __name__, url_prefix="/search")
@@ -32,9 +32,37 @@ def postcode():
 
 @bp.get("/results")
 def results():
-    # Placeholder so that url_for("search.results") resolves.
-    # Task 6 replaces it with the real page.
-    abort(501)
+    postcode = postcodes.normalise(request.args.get("postcode"))
+    if not postcodes.is_valid(postcode):
+        return redirect(url_for("search.postcode"))
+
+    cursor = request.args.get("cursor")
+    try:
+        found = get_api_client().search_titles(postcode, cursor)
+    except ValidationFailed:
+        if cursor:
+            # A cursor edited by hand, or left over from an old link: start the
+            # search again from the first page rather than showing an error.
+            return redirect(url_for("search.results", postcode=postcode))
+        return redirect(url_for("search.postcode"))
+    except ApiError:
+        return render_template("search/unavailable.html"), 503
+
+    def page_href(page_cursor):
+        return (
+            url_for("search.results", postcode=postcode, cursor=page_cursor)
+            if page_cursor
+            else None
+        )
+
+    return render_template(
+        "search/results.html",
+        postcode=postcodes.format_for_display(postcode),
+        titles=found["results"],
+        total=found["total"],
+        previous_href=page_href(found["previousCursor"]),
+        next_href=page_href(found["nextCursor"]),
+    )
 
 
 @bp.get("/titles/<title_number>")

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{%- from 'govuk_frontend_jinja/components/back-link/macro.html' import govukBackLink -%}
+{%- from 'govuk_frontend_jinja/components/pagination/macro.html' import govukPagination -%}
+
+{% block pageTitle %}{% if titles %}Properties in {{ postcode }}{% else %}No results for {{ postcode }}{% endif %} – GOV.UK{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({'text': 'Back', 'href': url_for('search.postcode')}) }}
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+
+  {% if titles %}
+
+    <h1 class="govuk-heading-l">Properties in {{ postcode }}</h1>
+
+    <p class="govuk-body">
+      {{ total }} {{ 'property' if total == 1 else 'properties' }} at this postcode
+    </p>
+
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th scope="col" class="govuk-table__header">Address</th>
+          <th scope="col" class="govuk-table__header">Title number</th>
+          <th scope="col" class="govuk-table__header">Tenure</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for title in titles %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">
+              <a class="govuk-link" href="{{ url_for('search.detail', title_number=title.titleNumber) }}">
+                {{- [title.address.line1, title.address.line2] | select | join(', ') -}}
+              </a>
+            </td>
+            <td class="govuk-table__cell">{{ title.titleNumber }}</td>
+            <td class="govuk-table__cell">{{ title.tenure | capitalize }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {#- Keyset pagination moves one page at a time in either direction. There
+        are no numbered pages: jumping to "page 7" would need an OFFSET. -#}
+    {% if previous_href or next_href %}
+      {{ govukPagination({
+        'previous': {'href': previous_href} if previous_href else none,
+        'next': {'href': next_href} if next_href else none
+      }) }}
+    {% endif %}
+
+  {% else %}
+
+    <h1 class="govuk-heading-l">No results for {{ postcode }}</h1>
+
+    <p class="govuk-body">There are no registered titles at that postcode.</p>
+
+    <p class="govuk-body">This could be because:</p>
+
+    <ul class="govuk-list govuk-list--bullet">
+      <li>the postcode was typed incorrectly</li>
+      <li>the properties at that postcode are not registered</li>
+    </ul>
+
+    <p class="govuk-body">
+      <a class="govuk-link" href="{{ url_for('search.postcode') }}">Search again</a>
+    </p>
+
+  {% endif %}
+
+  </div>
+</div>
+{% endblock %}
