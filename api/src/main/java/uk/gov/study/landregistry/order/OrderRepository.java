@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
@@ -32,9 +33,22 @@ public class OrderRepository {
                    applicant_address,
                    status,
                    amount_pence,
-                   created_at
+                   created_at,
+                   paid_at
             FROM register_order
             WHERE reference = :reference
+            """;
+
+    // The status check in the WHERE clause is what makes paying safe: two
+    // requests racing to pay the same order cannot both succeed, and paying an
+    // order that is already paid changes nothing. No read-then-write, so no
+    // window between checking the status and changing it.
+    private static final String MARK_PAID = """
+            UPDATE register_order
+            SET status = 'PAID',
+                paid_at = :paidAt
+            WHERE reference = :reference
+              AND status = 'PENDING_PAYMENT'
             """;
 
     private final JdbcClient jdbcClient;
@@ -66,6 +80,19 @@ public class OrderRepository {
                 .update();
     }
 
+    /**
+     * Moves a pending order to PAID. Returns false, changing nothing, when there
+     * is no such order or it is already paid.
+     */
+    public boolean markPaid(String reference, Instant paidAt) {
+        int updated = jdbcClient
+                .sql(MARK_PAID)
+                .param("reference", reference)
+                .param("paidAt", paidAt.atOffset(ZoneOffset.UTC))
+                .update();
+        return updated == 1;
+    }
+
     public Optional<RegisterOrder> findByReference(String reference) {
         return jdbcClient
                 .sql(FIND_BY_REFERENCE)
@@ -85,6 +112,11 @@ public class OrderRepository {
                 rs.getString("applicant_address"),
                 OrderStatus.valueOf(rs.getString("status")),
                 rs.getLong("amount_pence"),
-                rs.getObject("created_at", OffsetDateTime.class).toInstant());
+                rs.getObject("created_at", OffsetDateTime.class).toInstant(),
+                toInstant(rs.getObject("paid_at", OffsetDateTime.class)));
+    }
+
+    private static Instant toInstant(OffsetDateTime value) {
+        return value == null ? null : value.toInstant();
     }
 }

@@ -41,7 +41,9 @@ public class OrderService {
                 PRICE_PENCE,
                 // TIMESTAMPTZ keeps microseconds; truncating here makes the
                 // order returned by POST identical to what a later GET reads.
-                Instant.now().truncatedTo(ChronoUnit.MICROS));
+                Instant.now().truncatedTo(ChronoUnit.MICROS),
+                // Not paid yet: payment is a separate step.
+                null);
 
         orders.insert(order);
         return order;

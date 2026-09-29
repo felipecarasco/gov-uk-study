@@ -137,7 +137,7 @@ class OrderControllerTest {
         RegisterOrder existing = new RegisterOrder(
                 "LR-AAAA2222", "SGL123456", DocumentType.TITLE_PLAN,
                 "Sam Okonkwo", "sam@example.com", "3 Bramber Lane",
-                OrderStatus.PENDING_PAYMENT, 300L, Instant.parse("2026-09-10T12:00:00Z"));
+                OrderStatus.PENDING_PAYMENT, 300L, Instant.parse("2026-09-10T12:00:00Z"), null);
 
         when(orderRepository.findByReference("LR-AAAA2222")).thenReturn(Optional.of(existing));
 

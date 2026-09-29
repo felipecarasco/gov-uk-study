@@ -8,7 +8,9 @@ import java.time.Instant;
  * No validation in the constructor, on purpose: the rules (positive amount,
  * existing title, unique reference) live in V3 constraints, which hold for
  * anyone who writes to the table. Validating user input is the HTTP layer's
- * job, in Task 3.
+ * job (see CreateOrderRequest).
+ *
+ * paidAt is null until the order is paid.
  */
 public record RegisterOrder(
         String reference,
@@ -19,5 +21,6 @@ public record RegisterOrder(
         String applicantAddress,
         OrderStatus status,
         long amountPence,
-        Instant createdAt) {
+        Instant createdAt,
+        Instant paidAt) {
 }
