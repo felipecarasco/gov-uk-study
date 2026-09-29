@@ -63,6 +63,7 @@ does.
 
 | Method | Path | |
 |---|---|---|
+| `GET` | `/api/v1/titles?postcode=&cursor=&limit=` | Titles in a postcode, one page at a time (keyset pagination) |
 | `GET` | `/api/v1/titles/{titleNumber}` | Title summary |
 | `POST` | `/api/v1/orders` | Create an order for a copy of the register |
 | `GET` | `/api/v1/orders/{reference}` | Fetch an order |

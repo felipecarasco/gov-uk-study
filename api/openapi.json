@@ -45,6 +45,58 @@
                 }
             }
         },
+        "/api/v1/titles": {
+            "get": {
+                "tags": [
+                    "title-controller"
+                ],
+                "operationId": "search",
+                "parameters": [
+                    {
+                        "name": "postcode",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "minLength": 1,
+                            "pattern": "^\\s*[A-Za-z]{1,2}[0-9][A-Za-z0-9]?\\s*[0-9][A-Za-z]{2}\\s*$"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 20,
+                            "maximum": 50,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TitleSearchPage"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/titles/{titleNumber}": {
             "get": {
                 "tags": [
@@ -200,6 +252,45 @@
                     },
                     "postcode": {
                         "type": "string"
+                    }
+                }
+            },
+            "TitleSearchPage": {
+                "type": "object",
+                "properties": {
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TitleSummary"
+                        }
+                    },
+                    "total": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "previousCursor": {
+                        "type": "string"
+                    },
+                    "nextCursor": {
+                        "type": "string"
+                    }
+                }
+            },
+            "TitleSummary": {
+                "type": "object",
+                "properties": {
+                    "titleNumber": {
+                        "type": "string"
+                    },
+                    "tenure": {
+                        "type": "string",
+                        "enum": [
+                            "FREEHOLD",
+                            "LEASEHOLD"
+                        ]
+                    },
+                    "address": {
+                        "$ref": "#/components/schemas/Address"
                     }
                 }
             },

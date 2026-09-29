@@ -1,17 +1,24 @@
 package uk.gov.study.landregistry.config;
 
+import org.springframework.beans.TypeMismatchException;
+import org.springframework.context.MessageSourceResolvable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import uk.gov.study.landregistry.order.OrderNotFoundException;
+import uk.gov.study.landregistry.title.InvalidCursorException;
 import uk.gov.study.landregistry.title.TitleNotFoundException;
 
 import java.net.URI;
@@ -79,7 +86,56 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
             errors.putIfAbsent(error.getField(), error.getDefaultMessage());
         }
+        return handleExceptionInternal(ex, validationProblem(errors), headers, status, request);
+    }
 
+    /** Constraint failures on @RequestParam, such as a malformed postcode or a limit out of range. */
+    @Override
+    protected ResponseEntity<Object> handleHandlerMethodValidationException(
+            HandlerMethodValidationException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
+        Map<String, String> errors = new LinkedHashMap<>();
+        for (ParameterValidationResult result : ex.getParameterValidationResults()) {
+            String parameter = result.getMethodParameter().getParameterName();
+            for (MessageSourceResolvable error : result.getResolvableErrors()) {
+                errors.putIfAbsent(parameter, error.getDefaultMessage());
+            }
+        }
+        return handleExceptionInternal(ex, validationProblem(errors), headers, status, request);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMissingServletRequestParameter(
+            MissingServletRequestParameterException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
+        Map<String, String> errors = Map.of(ex.getParameterName(), ex.getParameterName() + " is required");
+        return handleExceptionInternal(ex, validationProblem(errors), headers, status, request);
+    }
+
+    /** A parameter that cannot be converted, such as limit=abc. */
+    @Override
+    protected ResponseEntity<Object> handleTypeMismatch(
+            TypeMismatchException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
+        String parameter = (ex instanceof MethodArgumentTypeMismatchException mismatch)
+                ? mismatch.getName()
+                : ex.getPropertyName();
+        Map<String, String> errors = Map.of(parameter, parameter + " is not valid");
+        return handleExceptionInternal(ex, validationProblem(errors), headers, status, request);
+    }
+
+    @ExceptionHandler(InvalidCursorException.class)
+    ProblemDetail handleInvalidCursor(InvalidCursorException ex) {
+        return validationProblem(Map.of("cursor", "cursor is not valid; start again from the first page"));
+    }
+
+    private static ProblemDetail validationProblem(Map<String, String> errors) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
                 "The request has fields that are missing or invalid");
@@ -88,6 +144,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setTitle("Validation failed");
         problem.setProperty("errors", errors);
 
-        return handleExceptionInternal(ex, problem, headers, status, request);
+        return problem;
     }
 }
