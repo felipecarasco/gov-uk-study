@@ -1,8 +1,27 @@
 from flask import Blueprint, abort, redirect, render_template, request, session, url_for
 
-from app.forms.order import DocumentTypeForm, YourDetailsForm
+from app.api_client import ApiError, OrderNotFound, ValidationFailed, get_api_client
+from app.forms.order import (
+    DOCUMENT_TYPE_LABELS,
+    ConfirmOrderForm,
+    DocumentTypeForm,
+    YourDetailsForm,
+)
 
 bp = Blueprint("order", __name__, url_prefix="/order")
+
+# Shown before the order exists. The API decides the real amount (OrderService),
+# and the confirmation comes from what it returns; this only has to match it.
+ORDER_PRICE_PENCE = 300
+
+# Where each API field can be changed, so an error from the API links to the
+# page that fixes it.
+_CHANGE_PAGE = {
+    "documentType": "order.document_type",
+    "applicantName": "order.your_details",
+    "applicantEmail": "order.your_details",
+    "applicantAddress": "order.your_details",
+}
 
 
 def _save(**fields):
@@ -17,6 +36,26 @@ def _save(**fields):
     session["order"] = order
 
 
+def _changing():
+    """True when the user came from a Change link on check answers."""
+    return bool(request.args.get("change"))
+
+
+def _next(endpoint):
+    """Where to go after saving: back to check answers when changing an answer."""
+    return url_for("order.check_answers") if _changing() else url_for(endpoint)
+
+
+def _back(href):
+    """Where the Back link goes: check answers when changing an answer."""
+    return url_for("order.check_answers") if _changing() else href
+
+
+def _prefill():
+    """Answers to show on GET. On POST only what was submitted counts."""
+    return session["order"] if request.method == "GET" else None
+
+
 @bp.get("/start/<title_number>")
 def start(title_number):
     session["order"] = {"title_number": title_number.strip().upper()}
@@ -25,25 +64,23 @@ def start(title_number):
 
 @bp.route("/document-type", methods=["GET", "POST"])
 def document_type():
-    form = DocumentTypeForm()
+    form = DocumentTypeForm(data=_prefill())
 
     if form.validate_on_submit():
         _save(document_type=form.document_type.data)
-        return redirect(url_for("order.your_details"))
+        return redirect(_next("order.your_details"))
 
+    title_number = session["order"]["title_number"]
     return render_template(
         "order/document_type.html",
         form=form,
-        title_number=session["order"]["title_number"],
+        back_href=_back(url_for("search.detail", title_number=title_number)),
     )
 
 
 @bp.route("/your-details", methods=["GET", "POST"])
 def your_details():
-    # On GET the form is filled in from the session, so going back keeps the
-    # answers. On POST only what was submitted counts: a field missing from the
-    # request must not be quietly taken from the session.
-    form = YourDetailsForm(data=session["order"] if request.method == "GET" else None)
+    form = YourDetailsForm(data=_prefill())
 
     if form.validate_on_submit():
         _save(
@@ -51,13 +88,69 @@ def your_details():
             applicant_email=form.applicant_email.data,
             applicant_address=form.applicant_address.data,
         )
-        return redirect(url_for("order.check_answers"))
+        return redirect(_next("order.check_answers"))
 
-    return render_template("order/your_details.html", form=form)
+    return render_template(
+        "order/your_details.html",
+        form=form,
+        back_href=_back(url_for("order.document_type")),
+    )
 
 
-@bp.get("/check-answers")
+@bp.route("/check-answers", methods=["GET", "POST"])
 def check_answers():
-    # Placeholder so that url_for("order.check_answers") resolves.
-    # Task 7 replaces it with the real page.
-    abort(501)
+    order = session["order"]
+    form = ConfirmOrderForm()
+    errors = None
+
+    if form.validate_on_submit():
+        try:
+            created = get_api_client().create_order(
+                title_number=order["title_number"],
+                document_type=order["document_type"],
+                applicant_name=order["applicant_name"],
+                applicant_email=order["applicant_email"],
+                applicant_address=order["applicant_address"],
+            )
+        except ValidationFailed as exc:
+            errors = _error_list(exc.errors)
+        except ApiError:
+            return render_template("search/unavailable.html"), 503
+        else:
+            # Clear the order before redirecting (Post/Redirect/Get): a reload
+            # or a second click must not create and charge a second order.
+            session.pop("order", None)
+            return redirect(url_for("order.confirmation", reference=created["reference"]))
+
+    return render_template(
+        "order/check_answers.html",
+        form=form,
+        order=order,
+        document_label=DOCUMENT_TYPE_LABELS[order["document_type"]],
+        price_pence=ORDER_PRICE_PENCE,
+        errors=errors,
+    )
+
+
+@bp.get("/confirmation/<reference>")
+def confirmation(reference):
+    try:
+        order = get_api_client().get_order(reference)
+    except OrderNotFound:
+        abort(404)
+    except ApiError:
+        return render_template("search/unavailable.html"), 503
+
+    return render_template("order/confirmation.html", order=order, price_pence=order["amountPence"])
+
+
+def _error_list(errors):
+    """Build the list govukErrorSummary expects from the API's field errors."""
+    items = []
+    for field, message in errors.items():
+        endpoint = _CHANGE_PAGE.get(field)
+        item = {"text": message}
+        if endpoint:
+            item["href"] = url_for(endpoint) + "?change=1"
+        items.append(item)
+    return items

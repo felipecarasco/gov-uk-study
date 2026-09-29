@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{%- from 'govuk_frontend_jinja/components/error-summary/macro.html' import govukErrorSummary -%}
+{%- from 'govuk_frontend_jinja/components/back-link/macro.html' import govukBackLink -%}
+{%- from 'govuk_frontend_jinja/components/summary-list/macro.html' import govukSummaryList -%}
+
+{% block pageTitle %}{% if errors %}Error: {% endif %}Check your answers – GOV.UK{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({'text': 'Back', 'href': url_for('order.your_details')}) }}
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+
+    {% if errors %}
+      {{ govukErrorSummary({'titleText': 'There is a problem', 'errorList': errors}) }}
+    {% endif %}
+
+    <h1 class="govuk-heading-l">Check your answers</h1>
+
+    {#- visuallyHiddenText gives each Change link its context: a screen reader
+        listing the links would otherwise announce "Change, Change, Change". -#}
+    {% set change_document = url_for('order.document_type') ~ '?change=1' %}
+    {% set change_details = url_for('order.your_details') ~ '?change=1' %}
+
+    {{ govukSummaryList({'classes': 'govuk-!-margin-bottom-9', 'rows': [
+      {'key': {'text': 'Title number'}, 'value': {'text': order.title_number}},
+      {'key': {'text': 'Document'}, 'value': {'text': document_label},
+       'actions': {'items': [{'href': change_document, 'text': 'Change', 'visuallyHiddenText': 'document'}]}},
+      {'key': {'text': 'Full name'}, 'value': {'text': order.applicant_name},
+       'actions': {'items': [{'href': change_details, 'text': 'Change', 'visuallyHiddenText': 'full name'}]}},
+      {'key': {'text': 'Email address'}, 'value': {'text': order.applicant_email},
+       'actions': {'items': [{'href': change_details, 'text': 'Change', 'visuallyHiddenText': 'email address'}]}},
+      {'key': {'text': 'Address'}, 'value': {'text': order.applicant_address},
+       'actions': {'items': [{'href': change_details, 'text': 'Change', 'visuallyHiddenText': 'address'}]}}
+    ]}) }}
+
+    <h2 class="govuk-heading-m">Now confirm your order</h2>
+    <p class="govuk-body">
+      By confirming, you are ordering an official copy of the {{ document_label | lower }}
+      for {{ order.title_number }}. You will pay {{ price_pence | pounds }} on the next page.
+    </p>
+
+    <form action="" method="post" novalidate>
+      {{ form.csrf_token }}
+      {{ form.submit(params={'text': 'Accept and continue to payment'}) }}
+    </form>
+
+  </div>
+</div>
+{% endblock %}

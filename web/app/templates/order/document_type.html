@@ -6,7 +6,7 @@
 {% block pageTitle %}{% if form.errors %}Error: {% endif %}What do you want to order? – GOV.UK{% endblock %}
 
 {% block beforeContent %}
-  {{ govukBackLink({'text': 'Back', 'href': url_for('search.detail', title_number=title_number)}) }}
+  {{ govukBackLink({'text': 'Back', 'href': back_href}) }}
 {% endblock %}
 
 {% block content %}

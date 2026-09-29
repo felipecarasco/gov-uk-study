@@ -14,6 +14,10 @@ DOCUMENT_TYPES = [
     ("TITLE_PLAN", "Title plan"),
 ]
 
+# Label for each stored value, shared by the radios and the check answers page
+# so the two cannot drift apart.
+DOCUMENT_TYPE_LABELS = dict(DOCUMENT_TYPES)
+
 _SELECT_A_DOCUMENT_TYPE = "Select a document type"
 
 
@@ -76,3 +80,13 @@ class YourDetailsForm(FlaskForm):
     )
 
     submit = SubmitField("Continue", widget=GovSubmitInput())
+
+
+class ConfirmOrderForm(FlaskForm):
+    """Only a button, but a FlaskForm so that the CSRF token is checked.
+
+    Without it, any other site could post to this page using the visitor's
+    session and place an order in their name.
+    """
+
+    submit = SubmitField("Accept and continue to payment", widget=GovSubmitInput())
