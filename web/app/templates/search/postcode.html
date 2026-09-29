@@ -3,7 +3,7 @@
 {%- from 'govuk_frontend_jinja/components/error-summary/macro.html' import govukErrorSummary -%}
 {%- from 'govuk_frontend_jinja/components/back-link/macro.html' import govukBackLink -%}
 
-{% block pageTitle %}{% if form.errors %}Error: {% endif %}Search by title number – GOV.UK{% endblock %}
+{% block pageTitle %}{% if form.errors %}Error: {% endif %}Search by postcode – GOV.UK{% endblock %}
 
 {% block beforeContent %}
   {{ govukBackLink({'text': 'Back', 'href': url_for('main.index')}) }}
@@ -17,24 +17,24 @@
       {{ govukErrorSummary(wtforms_errors(form)) }}
     {% endif %}
 
-    <h1 class="govuk-heading-l">What is the title number?</h1>
+    <h1 class="govuk-heading-l">What is the postcode?</h1>
 
     <form action="" method="post" novalidate>
       {{ form.csrf_token }}
 
-      {{ form.title_number(params={
-        'label': {'text': 'Title number', 'classes': 'govuk-label--m'},
-        'hint': {'text': 'For example, SGL123456'},
+      {{ form.postcode(params={
+        'label': {'text': 'Postcode', 'classes': 'govuk-label--m'},
+        'hint': {'text': 'For example, CR0 2QQ'},
         'classes': 'govuk-input--width-10',
-        'spellcheck': false,
-        'autocomplete': 'off'
+        'autocomplete': 'postal-code',
+        'spellcheck': false
       }) }}
 
-      {{ form.submit(params={'text': 'Continue'}) }}
+      {{ form.submit(params={'text': 'Search'}) }}
     </form>
 
     <p class="govuk-body">
-      <a class="govuk-link" href="{{ url_for('search.postcode') }}">Search by postcode instead</a>
+      <a class="govuk-link" href="{{ url_for('search.title_number') }}">Search by title number instead</a>
     </p>
 
   </div>
