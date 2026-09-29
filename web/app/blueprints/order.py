@@ -1,3 +1,5 @@
+import functools
+
 from flask import Blueprint, abort, redirect, render_template, request, session, url_for
 
 from app.api_client import ApiError, OrderNotFound, ValidationFailed, get_api_client
@@ -22,6 +24,43 @@ _CHANGE_PAGE = {
     "applicantEmail": "order.your_details",
     "applicantAddress": "order.your_details",
 }
+
+
+# The page that fills in each session key, in flow order. A guard sends the
+# user to the page for the first key that is missing.
+_FILLED_IN_BY = {
+    "title_number": "main.index",
+    "document_type": "order.document_type",
+    "applicant_name": "order.your_details",
+    "applicant_email": "order.your_details",
+    "applicant_address": "order.your_details",
+}
+
+
+def requires_order(*keys):
+    """Only run the view if the order in the session has every key given.
+
+    Otherwise redirect to the page that fills in the first missing key: someone
+    arriving from a shared link or the browser's back button gets sent to the
+    right step instead of a 500, and an order can never be sent incomplete.
+    Being a view decorator, it guards GET and POST alike.
+    """
+
+    def decorator(view):
+        # functools.wraps keeps the view's name. Without it every guarded view
+        # is called "wrapper", and Flask fails at start-up with "View function
+        # mapping is overwriting an existing endpoint function".
+        @functools.wraps(view)
+        def wrapper(*args, **kwargs):
+            order = session.get("order") or {}
+            for key in _FILLED_IN_BY:
+                if key in keys and not order.get(key):
+                    return redirect(url_for(_FILLED_IN_BY[key]))
+            return view(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def _save(**fields):
@@ -63,6 +102,7 @@ def start(title_number):
 
 
 @bp.route("/document-type", methods=["GET", "POST"])
+@requires_order("title_number")
 def document_type():
     form = DocumentTypeForm(data=_prefill())
 
@@ -79,6 +119,7 @@ def document_type():
 
 
 @bp.route("/your-details", methods=["GET", "POST"])
+@requires_order("title_number", "document_type")
 def your_details():
     form = YourDetailsForm(data=_prefill())
 
@@ -98,6 +139,7 @@ def your_details():
 
 
 @bp.route("/check-answers", methods=["GET", "POST"])
+@requires_order(*_FILLED_IN_BY)
 def check_answers():
     order = session["order"]
     form = ConfirmOrderForm()
