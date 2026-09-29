@@ -61,6 +61,18 @@ class LandRegistryApiClient:
 
         return self._json_or_raise(response)
 
+    def search_titles(self, postcode, cursor=None):
+        """One page of titles in a postcode.
+
+        Returns {"results": [...], "total": int, "previousCursor": str | None,
+        "nextCursor": str | None}. Raises ValidationFailed when the API rejects
+        the postcode or the cursor, or ApiError.
+        """
+        params = {"postcode": postcode}
+        if cursor:
+            params["cursor"] = cursor
+        return self._json_or_raise(self._send("GET", "/api/v1/titles", params=params))
+
     def create_order(
         self, title_number, document_type, applicant_name, applicant_email, applicant_address
     ):
