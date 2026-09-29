@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block pageTitle %}Accessibility statement – GOV.UK{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-l">Accessibility statement</h1>
+
+    <p class="govuk-body">
+      This is a study project that copies the patterns of a GOV.UK service. It is built
+      with the GOV.UK Design System and aims to meet the Web Content Accessibility
+      Guidelines (WCAG) 2.2 at level AA.
+    </p>
+
+    <h2 class="govuk-heading-m">How it was tested</h2>
+    <p class="govuk-body">
+      Every page and error state was checked with the axe-core automated tool, and the
+      service was checked for use with a keyboard only.
+    </p>
+
+    <h2 class="govuk-heading-m">Compliance status</h2>
+    <p class="govuk-body">
+      This service is partially compliant with WCAG 2.2 AA. Automated checks find only
+      part of the problems people meet, and it has not been tested by disabled people
+      or audited by an accessibility specialist.
+    </p>
+  </div>
+</div>
+{% endblock %}

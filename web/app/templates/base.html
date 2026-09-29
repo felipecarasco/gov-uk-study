@@ -24,9 +24,9 @@
   {{ govukFooter({
     'meta': {
       'items': [
-        {'href': '#', 'text': 'Accessibility statement'},
-        {'href': '#', 'text': 'Cookies'},
-        {'href': '#', 'text': 'Privacy'}
+        {'href': url_for('main.accessibility'), 'text': 'Accessibility statement'},
+        {'href': url_for('main.cookies'), 'text': 'Cookies'},
+        {'href': url_for('main.privacy'), 'text': 'Privacy'}
       ]
     }
   }) }}
