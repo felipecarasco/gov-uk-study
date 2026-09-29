@@ -19,10 +19,10 @@ def title_number():
 @bp.get("/titles/<title_number>")
 def detail(title_number):
     try:
-        titulo = get_api_client().get_title(title_number)
+        title = get_api_client().get_title(title_number)
     except TitleNotFound:
         return render_template("search/not_found.html", title_number=title_number.upper()), 404
     except ApiError:
         return render_template("search/unavailable.html"), 503
 
-    return render_template("search/detail.html", title=titulo)
+    return render_template("search/detail.html", title=title)

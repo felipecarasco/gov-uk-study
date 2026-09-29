@@ -1,27 +1,27 @@
-# Imagem da API, construída para rodar no OpenShift.
+# API image, built to run on OpenShift.
 #
-# O OpenShift ignora o UID do `USER` e injeta um UID arbitrário do range do
-# projeto, sempre no grupo 0 (root group). Por isso a imagem NÃO pode depender
-# de um usuário específico: tudo que o processo precisa escrever ou ler tem de
-# pertencer ao grupo 0 com permissão de grupo igual à do dono (`chmod g=u`).
-# Uma imagem que funciona no `docker run` e quebra no OpenShift quase sempre
-# erra exatamente nisso.
+# OpenShift ignores the image's USER and injects an arbitrary UID from the
+# project's range, always in group 0 (root group). So the image must NOT depend
+# on a specific user: everything the process reads or writes has to belong to
+# group 0 with group permissions equal to the owner's (`chmod g=u`). An image
+# that works with `docker run` and breaks on OpenShift almost always gets this
+# wrong.
 
 # ---------- build ----------
 FROM eclipse-temurin:25-jdk AS build
 WORKDIR /build
 
-# O wrapper e o pom vêm antes do código: enquanto as dependências não mudam,
-# esta camada fica em cache e o `go-offline` não roda de novo.
+# The wrapper and the pom come before the code: while dependencies do not
+# change, this layer stays cached and `go-offline` does not run again.
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 RUN ./mvnw --batch-mode dependency:go-offline
 
-# Só src/main entra: a imagem existe para empacotar o artefato, não para testar.
-# Quem roda os testes é o pipeline (Jenkins/GitLab CI), antes de mandar construir
-# a imagem — e os testes de integração precisariam de um Docker dentro do build,
-# porque usam Testcontainers. Como consequência útil, um teste em vermelho no meio
-# de um TDD não impede de gerar a imagem.
+# Only src/main goes in: the image packages the artifact, it does not test it.
+# The pipeline (Jenkins/GitLab CI) runs the tests before building the image,
+# and the integration tests would need Docker inside the build because they use
+# Testcontainers. A useful side effect: a red test in the middle of TDD does not
+# stop the image from building.
 COPY src/main/ src/main/
 RUN ./mvnw --batch-mode -DskipTests package
 
@@ -29,28 +29,28 @@ RUN ./mvnw --batch-mode -DskipTests package
 FROM eclipse-temurin:25-jre
 WORKDIR /app
 
-# curl existe aqui só para servir ao HEALTHCHECK abaixo. No OpenShift as probes
-# são feitas pelo kubelet, de fora do container, e ele seria dispensável.
+# curl is here only for the HEALTHCHECK below. On OpenShift the kubelet runs
+# the probes from outside the container, so it would not be needed there.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends curl \
  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /build/target/land-registry-api-*.jar app.jar
 
-# Permissões compatíveis com UID arbitrário (ver comentário no topo).
+# Permissions that work with an arbitrary UID (see the note at the top).
 RUN chgrp -R 0 /app && chmod -R g=u /app
 
-# UID nominal, não privilegiado. No OpenShift ele é substituído; num `docker
-# run` puro é ele que vale — nos dois casos o processo não é root.
+# Nominal, unprivileged UID. OpenShift replaces it; with a plain `docker run`
+# it is the one used. Either way the process is not root.
 USER 1001
 
 EXPOSE 8080
 
-# Liveness/readiness no OpenShift apontam para /actuator/health; o HEALTHCHECK
-# abaixo é o equivalente para `docker run` / compose.
+# OpenShift liveness/readiness probes point at /actuator/health; this
+# HEALTHCHECK is the equivalent for `docker run` / compose.
 HEALTHCHECK --interval=10s --timeout=3s --start-period=40s --retries=3 \
   CMD curl -fsS http://127.0.0.1:8080/actuator/health | grep -q '"status":"UP"'
 
-# `-XX:MaxRAMPercentage` em vez de `-Xmx`: no container o limite de memória vem
-# do cgroup, não da máquina, e a JVM precisa dimensionar o heap por ele.
+# -XX:MaxRAMPercentage rather than -Xmx: in a container the memory limit comes
+# from the cgroup, not the host, and the JVM must size the heap from it.
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "app.jar"]

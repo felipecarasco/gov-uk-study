@@ -1,7 +1,7 @@
 {
   "name": "land-registry-web-assets",
   "private": true,
-  "description": "Baixa os assets do GOV.UK Frontend; nada é compilado aqui",
+  "description": "Fetches the GOV.UK Frontend assets; nothing is compiled here",
   "dependencies": {
     "govuk-frontend": "6.3.0"
   }

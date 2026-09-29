@@ -1,19 +1,19 @@
-// Pipeline declarativo, equivalente ao .github/workflows/ci.yml e ao .gitlab-ci.yml.
+// Declarative pipeline, equivalent to .github/workflows/ci.yml and .gitlab-ci.yml.
 //
-// Como o .gitlab-ci.yml, este arquivo NÃO é executado por nenhum runner: o
-// repositório vive no GitHub. Ele existe porque o ambiente-alvo (HMLR) usa
-// GitLab self-hosted com Jenkins, e expressar o mesmo pipeline nos três formatos
-// documenta o entendimento daquele ambiente.
+// Like .gitlab-ci.yml, this file is not run by any agent: the repository is
+// hosted on GitHub. It exists because the target environment uses self-hosted
+// GitLab with Jenkins, and writing the same pipeline in all three formats keeps
+// them comparable.
 //
-// Num Jenkins de verdade faltariam duas coisas de infraestrutura, deixadas de
-// fora porque dependem da instância:
-//   - `options { gitLabConnection('...') }` mais o webhook do GitLab, para o
-//     status do build voltar ao merge request;
-//   - credenciais do registry (`withCredentials`) no lugar do push comentado
-//     no fim.
+// A real Jenkins would need two more pieces of infrastructure, left out
+// because they depend on the instance:
+//   - `options { gitLabConnection('...') }` plus the GitLab webhook, so the
+//     build status goes back to the merge request;
+//   - registry credentials (`withCredentials`) in place of the commented-out
+//     push at the end.
 
 pipeline {
-  // Sem agente global: cada stage escolhe sua imagem, e nada é instalado no nó.
+  // No global agent: each stage picks its own image and nothing is installed on the node.
   agent none
 
   options {
@@ -23,23 +23,22 @@ pipeline {
   }
 
   environment {
-    // Cache do Maven dentro do workspace: o container do stage é descartado a
-    // cada build, então ~/.m2 não sobrevive.
+    // Maven cache inside the workspace: the stage container is thrown away on
+    // every build, so ~/.m2 would not survive.
     MAVEN_ARGS = '--batch-mode -Dmaven.repo.local=.m2/repository'
   }
 
   stages {
-    stage('Testes') {
+    stage('Tests') {
       parallel {
         stage('API (Java 25)') {
           agent {
             docker {
               image 'eclipse-temurin:25-jdk'
-              // Os testes de integração usam Testcontainers, que precisa falar
-              // com um daemon Docker. Montar o socket do host é o caminho mais
-              // simples; onde isso for vetado por política, a alternativa é um
-              // serviço docker:dind com TESTCONTAINERS_HOST_OVERRIDE, como no
-              // .gitlab-ci.yml.
+              // The integration tests use Testcontainers, which needs to talk
+              // to a Docker daemon. Mounting the host socket is the simplest
+              // way; where policy forbids it, use a docker:dind service with
+              // TESTCONTAINERS_HOST_OVERRIDE, as in .gitlab-ci.yml.
               args '-v /var/run/docker.sock:/var/run/docker.sock --group-add docker'
               reuseNode true
             }
@@ -51,14 +50,14 @@ pipeline {
           }
           post {
             always {
-              // Unitários (surefire) e integração (failsafe) em relatórios separados.
+              // Unit (surefire) and integration (failsafe) tests report separately.
               junit allowEmptyResults: true,
                     testResults: 'api/target/surefire-reports/*.xml, api/target/failsafe-reports/*.xml'
             }
           }
         }
 
-        stage('Front-end (Python 3.12)') {
+        stage('Front end (Python 3.12)') {
           agent {
             docker {
               image 'python:3.12-slim'
@@ -85,23 +84,23 @@ pipeline {
       }
     }
 
-    stage('Imagens') {
-      // Só constrói imagem do que já passou nos testes e vai virar deploy.
+    stage('Images') {
+      // Only build images from what passed the tests and is going to be deployed.
       when { branch 'main' }
       agent any
       steps {
         script {
-          // A tag é o SHA curto, não `latest`: no OpenShift é o que permite
-          // apontar o rollback para uma imagem específica.
+          // Tag with the short SHA, not `latest`: on OpenShift that is what lets
+          // a rollback point at one specific image.
           def tag = env.GIT_COMMIT.take(7)
           sh "docker build -t land-registry-api:${tag} ./api"
           sh "docker build -t land-registry-web:${tag} ./web"
 
-          // Push e `oc tag`/rollout ficam de fora enquanto não há registry nem
-          // cluster alvo neste projeto de estudo:
+          // Push and `oc tag`/rollout are left out while there is no registry
+          // or target cluster:
           //   docker push .../land-registry-api:${tag}
-          //   oc -n <projeto> set image deploy/api api=.../land-registry-api:${tag}
-          echo "Imagens construídas com a tag ${tag}."
+          //   oc -n <project> set image deploy/api api=.../land-registry-api:${tag}
+          echo "Images built with tag ${tag}."
         }
       }
     }
@@ -109,7 +108,7 @@ pipeline {
 
   post {
     failure {
-      echo 'Build vermelho. No ambiente real, o webhook devolveria o status ao merge request no GitLab.'
+      echo 'Build failed. In the real environment the webhook would report the status back to the GitLab merge request.'
     }
   }
 }

@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 
 BASE = "http://api.test"
 
-TITULO = {
+TITLE = {
     "titleNumber": "SGL123457",
     "tenure": "LEASEHOLD",
     "classOfTitle": "Title absolute",
@@ -26,7 +26,7 @@ TITULO = {
     ],
 }
 
-SEM_ONUS = {
+NO_CHARGES = {
     "titleNumber": "SGL123458",
     "tenure": "FREEHOLD",
     "classOfTitle": "Possessory title",
@@ -37,96 +37,96 @@ SEM_ONUS = {
 
 
 @respx.mock
-def test_detalhe_mostra_os_dados_do_titulo(client):
-    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(return_value=httpx.Response(200, json=TITULO))
+def test_detail_shows_the_title_data(client):
+    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(return_value=httpx.Response(200, json=TITLE))
 
-    resposta = client.get("/search/titles/SGL123457")
-    assert resposta.status_code == 200
+    response = client.get("/search/titles/SGL123457")
+    assert response.status_code == 200
 
-    sopa = BeautifulSoup(resposta.get_data(as_text=True), "html.parser")
-    texto = sopa.get_text()
+    soup = BeautifulSoup(response.get_data(as_text=True), "html.parser")
+    text = soup.get_text()
 
-    assert "SGL123457" in sopa.find("h1").get_text()
-    assert "Leasehold" in texto
-    assert "Flat 4, Hazelmere Court" in texto
-    assert "CR0 2QQ" in texto
-    assert sopa.select(".govuk-summary-list"), "esperava summary lists do GDS"
+    assert "SGL123457" in soup.find("h1").get_text()
+    assert "Leasehold" in text
+    assert "Flat 4, Hazelmere Court" in text
+    assert "CR0 2QQ" in text
+    assert soup.select(".govuk-summary-list"), "expected GOV.UK summary lists"
 
 
 @respx.mock
-def test_detalhe_formata_valores_em_libras(client):
-    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(return_value=httpx.Response(200, json=TITULO))
+def test_detail_formats_amounts_in_pounds(client):
+    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(return_value=httpx.Response(200, json=TITLE))
 
-    texto = BeautifulSoup(
+    text = BeautifulSoup(
         client.get("/search/titles/SGL123457").get_data(as_text=True), "html.parser"
     ).get_text()
 
     # 28750000 pence = £287,500.00
-    assert "£287,500.00" in texto
-    assert "£230,000.00" in texto
+    assert "£287,500.00" in text
+    assert "£230,000.00" in text
 
 
 @respx.mock
-def test_detalhe_lista_todos_os_proprietarios_e_onus(client):
-    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(return_value=httpx.Response(200, json=TITULO))
+def test_detail_lists_every_proprietor_and_charge(client):
+    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(return_value=httpx.Response(200, json=TITLE))
 
-    texto = BeautifulSoup(
+    text = BeautifulSoup(
         client.get("/search/titles/SGL123457").get_data(as_text=True), "html.parser"
     ).get_text()
 
-    assert "JAMIE PATEL" in texto
-    assert "ROWAN PATEL" in texto
-    assert "CALDER BANK PLC" in texto
-    assert "MERIDIAN LENDING LTD" in texto
+    assert "JAMIE PATEL" in text
+    assert "ROWAN PATEL" in text
+    assert "CALDER BANK PLC" in text
+    assert "MERIDIAN LENDING LTD" in text
 
 
 @respx.mock
-def test_detalhe_sem_onus_mostra_mensagem_e_nao_quebra(client):
+def test_detail_without_charges_shows_a_message(client):
     respx.get(f"{BASE}/api/v1/titles/SGL123458").mock(
-        return_value=httpx.Response(200, json=SEM_ONUS)
+        return_value=httpx.Response(200, json=NO_CHARGES)
     )
 
-    resposta = client.get("/search/titles/SGL123458")
-    assert resposta.status_code == 200
+    response = client.get("/search/titles/SGL123458")
+    assert response.status_code == 200
 
-    texto = BeautifulSoup(resposta.get_data(as_text=True), "html.parser").get_text()
-    assert "No charges are registered" in texto
-    assert "Price paid" not in texto  # o seed não tem preço para este título
+    text = BeautifulSoup(response.get_data(as_text=True), "html.parser").get_text()
+    assert "No charges are registered" in text
+    assert "Price paid" not in text  # the seed has no price for this title
 
 
 @respx.mock
-def test_titulo_inexistente_mostra_pagina_de_nao_encontrado(client):
+def test_unknown_title_shows_the_not_found_page(client):
     respx.get(f"{BASE}/api/v1/titles/ZZ000000").mock(
         return_value=httpx.Response(404, json={"status": 404, "title": "Title not found"})
     )
 
-    resposta = client.get("/search/titles/ZZ000000")
-    assert resposta.status_code == 404
+    response = client.get("/search/titles/ZZ000000")
+    assert response.status_code == 404
 
-    sopa = BeautifulSoup(resposta.get_data(as_text=True), "html.parser")
-    assert "No results" in sopa.find("h1").get_text()
-    assert "ZZ000000" in sopa.get_text()
-    # A página de "nenhum resultado" do GDS precisa oferecer um caminho de volta.
-    assert sopa.select_one("a[href='/search/title-number']") is not None
+    soup = BeautifulSoup(response.get_data(as_text=True), "html.parser")
+    assert "No results" in soup.find("h1").get_text()
+    assert "ZZ000000" in soup.get_text()
+    # A GOV.UK "no results" page must offer a way back.
+    assert soup.select_one("a[href='/search/title-number']") is not None
 
 
 @respx.mock
-def test_api_fora_do_ar_devolve_503(client):
-    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(side_effect=httpx.ConnectError("recusado"))
+def test_api_down_returns_503(client):
+    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(side_effect=httpx.ConnectError("refused"))
 
     assert client.get("/search/titles/SGL123457").status_code == 503
 
 
 @respx.mock
-def test_datas_seguem_o_estilo_do_govuk(client):
-    """O guia de estilo do GOV.UK exige '2 November 2021', não '2021-11-02'.
-    Ver https://www.gov.uk/guidance/style-guide/a-to-z#dates."""
-    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(return_value=httpx.Response(200, json=TITULO))
+def test_dates_follow_the_govuk_style(client):
+    """The GOV.UK style guide requires '2 November 2021', not '2021-11-02'.
+    See https://www.gov.uk/guidance/style-guide/a-to-z#dates."""
+    respx.get(f"{BASE}/api/v1/titles/SGL123457").mock(return_value=httpx.Response(200, json=TITLE))
 
-    texto = BeautifulSoup(
+    text = BeautifulSoup(
         client.get("/search/titles/SGL123457").get_data(as_text=True), "html.parser"
     ).get_text()
 
-    assert "2 November 2021" in texto
-    assert "17 January 2024" in texto
-    assert "2021-11-02" not in texto
+    assert "2 November 2021" in text
+    assert "17 January 2024" in text
+    assert "2021-11-02" not in text

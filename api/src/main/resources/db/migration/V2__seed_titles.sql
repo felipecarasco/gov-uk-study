@@ -1,5 +1,5 @@
--- Dados fictícios para desenvolvimento e testes.
--- Nenhum imóvel, pessoa ou credor real.
+-- Fictitious data for development and tests.
+-- No real property, person or lender.
 
 INSERT INTO title (title_number, tenure, class_of_title,
                    address_line_1, address_line_2, town,
@@ -22,7 +22,7 @@ VALUES
    'Flat 9, Carrow House', '80 Wexford Road', 'Enfield', 'EN1 4TT', 'EN14TT',
    33200000, DATE '2018-09-10');
 
--- Proprietários. SGL123457 tem dois, para exercitar o agrupamento no extractor.
+-- Proprietors. SGL123457 has two, to exercise the grouping in the extractor.
 INSERT INTO proprietor (title_id, name, address)
 SELECT id, 'ALEX MORGAN HOLLOWAY', '12 Mallow Gardens, Croydon, CR0 2QQ'
 FROM title WHERE title_number = 'SGL123456';
@@ -47,8 +47,8 @@ INSERT INTO proprietor (title_id, name, address)
 SELECT id, 'DEVAN ASHWORTH', 'Flat 9, Carrow House, 80 Wexford Road, Enfield, EN1 4TT'
 FROM title WHERE title_number = 'MX987655';
 
--- Ônus. SGL123457 tem dois proprietários E dois ônus: é o caso que produz
--- produto cartesiano no JOIN e prova que o extractor deduplica corretamente.
+-- Charges. SGL123457 has two proprietors AND two charges: the case that makes
+-- the JOIN a cartesian product and proves the extractor deduplicates correctly.
 INSERT INTO charge (title_id, lender, charge_date, amount_pence)
 SELECT id, 'NORTHWOOD BUILDING SOCIETY', DATE '2019-06-14', 34000000
 FROM title WHERE title_number = 'SGL123456';
@@ -65,5 +65,5 @@ INSERT INTO charge (title_id, lender, charge_date, amount_pence)
 SELECT id, 'NORTHWOOD BUILDING SOCIETY', DATE '2023-03-28', 45750000
 FROM title WHERE title_number = 'MX987654';
 
--- SGL123458 e MX987655 ficam sem ônus de propósito: exercitam o LEFT JOIN
--- devolvendo lista vazia em vez de null.
+-- SGL123458 and MX987655 have no charges on purpose: they exercise the LEFT JOIN
+-- returning an empty list rather than null.

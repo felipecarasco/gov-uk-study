@@ -6,7 +6,7 @@ from app.api_client import ApiError, LandRegistryApiClient, TitleNotFound
 
 BASE = "http://api.test"
 
-TITULO = {
+TITLE = {
     "titleNumber": "SGL123456",
     "tenure": "FREEHOLD",
     "classOfTitle": "Title absolute",
@@ -33,28 +33,28 @@ def api():
 
 
 @respx.mock
-def test_get_title_devolve_o_json(api):
-    respx.get(f"{BASE}/api/v1/titles/SGL123456").mock(return_value=httpx.Response(200, json=TITULO))
+def test_get_title_returns_the_json(api):
+    respx.get(f"{BASE}/api/v1/titles/SGL123456").mock(return_value=httpx.Response(200, json=TITLE))
 
-    resultado = api.get_title("SGL123456")
+    result = api.get_title("SGL123456")
 
-    assert resultado["titleNumber"] == "SGL123456"
-    assert resultado["address"]["postcode"] == "CR0 2QQ"
+    assert result["titleNumber"] == "SGL123456"
+    assert result["address"]["postcode"] == "CR0 2QQ"
 
 
 @respx.mock
-def test_get_title_normaliza_para_maiusculas(api):
-    rota = respx.get(f"{BASE}/api/v1/titles/SGL123456").mock(
-        return_value=httpx.Response(200, json=TITULO)
+def test_get_title_upper_cases_the_number(api):
+    route = respx.get(f"{BASE}/api/v1/titles/SGL123456").mock(
+        return_value=httpx.Response(200, json=TITLE)
     )
 
     api.get_title("  sgl123456 ")
 
-    assert rota.called
+    assert route.called
 
 
 @respx.mock
-def test_get_title_levanta_title_not_found_em_404(api):
+def test_get_title_raises_title_not_found_on_404(api):
     respx.get(f"{BASE}/api/v1/titles/ZZ000000").mock(
         return_value=httpx.Response(
             404, json=PROBLEM_404, headers={"content-type": "application/problem+json"}
@@ -68,7 +68,7 @@ def test_get_title_levanta_title_not_found_em_404(api):
 
 
 @respx.mock
-def test_get_title_levanta_api_error_em_500(api):
+def test_get_title_raises_api_error_on_500(api):
     respx.get(f"{BASE}/api/v1/titles/SGL123456").mock(return_value=httpx.Response(500, text="boom"))
 
     with pytest.raises(ApiError):
@@ -76,13 +76,13 @@ def test_get_title_levanta_api_error_em_500(api):
 
 
 @respx.mock
-def test_get_title_levanta_api_error_quando_a_api_esta_fora(api):
-    respx.get(f"{BASE}/api/v1/titles/SGL123456").mock(side_effect=httpx.ConnectError("recusado"))
+def test_get_title_raises_api_error_when_the_api_is_down(api):
+    respx.get(f"{BASE}/api/v1/titles/SGL123456").mock(side_effect=httpx.ConnectError("refused"))
 
     with pytest.raises(ApiError):
         api.get_title("SGL123456")
 
 
-def test_title_not_found_e_subclasse_de_api_error():
-    # Permite que as rotas tratem só ApiError quando o motivo não importa.
+def test_title_not_found_is_an_api_error():
+    # Lets routes handle ApiError only when the reason does not matter.
     assert issubclass(TitleNotFound, ApiError)

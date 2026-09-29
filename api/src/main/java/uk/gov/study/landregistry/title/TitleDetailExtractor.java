@@ -12,16 +12,16 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Monta um TitleDetail a partir do resultado do JOIN entre title, proprietor e charge.
+ * Builds a TitleDetail from the JOIN of title, proprietor and charge.
  *
- * O JOIN produz produto cartesiano: um título com 2 proprietários e 2 ônus devolve
- * 4 linhas, cada proprietário repetido 2 vezes e cada ônus repetido 2 vezes. Por isso
- * acumulamos em mapas indexados pelo id da linha filha — a chave descarta as
- * repetições. LinkedHashMap preserva a ordem em que o banco devolveu.
+ * The JOIN is a cartesian product: a title with 2 proprietors and 2 charges
+ * returns 4 rows, each proprietor repeated twice and each charge repeated twice.
+ * So rows are collected into maps keyed by the child row's id, and the key drops
+ * the repeats. LinkedHashMap keeps the order the database returned.
  *
- * Devolve Optional, e não null: JdbcClient.query(ResultSetExtractor) rejeita um
- * retorno nulo com IllegalStateException("No result from ResultSetExtractor"),
- * então "não encontrei nada" precisa ser um valor de verdade.
+ * Returns Optional, not null: JdbcClient.query(ResultSetExtractor) rejects a null
+ * result with IllegalStateException("No result from ResultSetExtractor"), so
+ * "found nothing" has to be a real value.
  */
 class TitleDetailExtractor implements ResultSetExtractor<Optional<TitleDetail>> {
 
@@ -51,13 +51,13 @@ class TitleDetailExtractor implements ResultSetExtractor<Optional<TitleDetail>> 
                 long pence = rs.getLong("price_paid_pence");
                 pricePaidPence = rs.wasNull() ? null : pence;
 
-                Date data = rs.getDate("price_paid_date");
-                pricePaidDate = (data == null) ? null : data.toLocalDate();
+                Date saleDate = rs.getDate("price_paid_date");
+                pricePaidDate = (saleDate == null) ? null : saleDate.toLocalDate();
             }
 
-            // Em JDBC, getLong devolve 0 para NULL. wasNull() reporta sobre a
-            // ÚLTIMA coluna lida, então precisa vir imediatamente depois do get —
-            // é a armadilha clássica de LEFT JOIN.
+            // In JDBC, getLong returns 0 for NULL. wasNull() reports on the LAST
+            // column read, so it must come right after the get. This is the
+            // classic LEFT JOIN pitfall.
             long proprietorId = rs.getLong("proprietor_id");
             if (!rs.wasNull() && !proprietors.containsKey(proprietorId)) {
                 proprietors.put(proprietorId, new Proprietor(

@@ -8,15 +8,16 @@ web/__pycache__/
 **/__pycache__/
 *.py[cod]
 .pytest_cache/
+.ruff_cache/
 web/pytest-report.xml
 .coverage
 htmlcov/
 
-# Node (só usado para baixar os assets do GOV.UK Frontend)
+# Node (only used to fetch the GOV.UK Frontend assets)
 web/node_modules/
 web/app/static/govuk/
 
-# IDE / SO
+# IDE / OS
 .idea/
 .vscode/
 *.iml
@@ -24,3 +25,27 @@ web/app/static/govuk/
 
 # Local
 .env
+
+# Documentation is kept out of this repository
+docs/
+
+# AI tooling
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.mcp.json
+AGENTS.md
+GEMINI.md
+.gemini/
+.codex/
+.cursor/
+.cursorrules
+.windsurf/
+.windsurfrules
+.aider*
+.continue/
+.copilot/
+.github/copilot-instructions.md
+.github/instructions/
+.github/prompts/
+graphify-out/

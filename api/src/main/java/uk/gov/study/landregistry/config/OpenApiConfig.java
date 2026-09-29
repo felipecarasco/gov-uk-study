@@ -15,18 +15,18 @@ public class OpenApiConfig {
     @Bean
     OpenAPI landRegistryOpenApi() {
         return new OpenAPI()
-                // Sem um server explícito, o springdoc gera um a partir da URL da
-                // requisição: "http://localhost:8080" no servidor real, mas
-                // "http://localhost" sob MockMvc. Isso torna o spec dependente do
-                // ambiente e faz o teste de snapshot falhar sem que o contrato
-                // tenha mudado. Uma URL relativa é válida em OpenAPI 3 e é a
-                // resposta certa: o contrato descreve caminhos, não onde a API mora.
-                .servers(List.of(new Server().url("/").description("Este servidor")))
+                // Without an explicit server, springdoc derives one from the
+                // request URL: "http://localhost:8080" on the real server but
+                // "http://localhost" under MockMvc. That makes the spec depend on
+                // the environment and fails the snapshot test without the contract
+                // changing. A relative URL is valid in OpenAPI 3 and is the right
+                // answer: the contract describes paths, not where the API lives.
+                .servers(List.of(new Server().url("/").description("This server")))
                 .info(new Info()
                 .title("Land Registry API")
                 .description("""
-                        API de consulta ao registro de imóveis. Projeto de estudo — \
-                        os dados são fictícios e não representam imóveis reais.""")
+                        Land register lookup API. Study project: \
+                        the data is fictitious and does not describe real properties.""")
                 .version("v1")
                 .license(new License().name("MIT")));
     }

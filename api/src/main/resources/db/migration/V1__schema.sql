@@ -1,5 +1,5 @@
--- Registro de imóveis: tabelas do caminho de leitura.
--- A tabela register_order chega na V3, junto com o fluxo de pedido.
+-- Land register: tables for the read path.
+-- The register_order table arrives in V3, with the order flow.
 
 CREATE TABLE title (
     id                  BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -19,10 +19,10 @@ CREATE TABLE title (
 );
 
 COMMENT ON COLUMN title.postcode_normalised IS
-    'Postcode em maiúsculas e sem espaços, para busca. Ver a V2 e o TitleRepository.';
+    'Postcode in upper case with no spaces, for searching. See V2 and TitleRepository.';
 
--- Índice composto: serve tanto o filtro por postcode quanto a ordenação
--- estável exigida pela paginação por keyset da fase 2.
+-- Composite index: serves both the postcode filter and the stable ordering
+-- that keyset pagination in phase 2 needs.
 CREATE INDEX idx_title_postcode_normalised
     ON title (postcode_normalised, title_number);
 

@@ -1,5 +1,5 @@
 def register_blueprints(app):
-    """Registra todos os blueprints. Cresce a cada tarefa que adiciona telas."""
+    """Registers every blueprint. Grows with each task that adds pages."""
     from app.blueprints import main, order, search
 
     app.register_blueprint(main.bp)

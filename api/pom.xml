@@ -15,7 +15,7 @@
   <artifactId>land-registry-api</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <name>land-registry-api</name>
-  <description>API de consulta ao registro de imóveis — projeto de estudo</description>
+  <description>Land register lookup API — study project</description>
 
   <properties>
     <java.version>25</java.version>
@@ -35,7 +35,7 @@
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
 
-    <!-- A linha 3.x do springdoc é a de Spring Boot 4; a 2.x é para Boot 3. -->
+    <!-- springdoc 3.x is the line for Spring Boot 4; 2.x is for Boot 3. -->
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
@@ -43,20 +43,20 @@
     </dependency>
 
     <!--
-      ARMADILHA DO BOOT 4: a auto-configuração do Flyway saiu do
-      spring-boot-autoconfigure e foi para o módulo dedicado spring-boot-flyway.
-      Declarar apenas org.flywaydb:flyway-core (que era suficiente no Boot 3)
-      põe o Flyway no classpath sem ninguém para acioná-lo: a aplicação sobe,
-      o build fica verde e NENHUMA migração roda.
+      BOOT 4 PITFALL: Flyway auto-configuration moved out of
+      spring-boot-autoconfigure into the dedicated spring-boot-flyway module.
+      Declaring only org.flywaydb:flyway-core (enough on Boot 3) puts Flyway on
+      the classpath with nothing to trigger it: the app starts, the build is
+      green and NO migration runs.
 
-      spring-boot-starter-flyway traz o autoconfig e também o
-      spring-boot-starter-jdbc, por isso este último não é declarado acima.
+      spring-boot-starter-flyway brings the auto-configuration and also
+      spring-boot-starter-jdbc, which is why the latter is not declared above.
     -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-flyway</artifactId>
     </dependency>
-    <!-- Desde o Flyway 10, o suporte a cada banco vive num artefato separado. -->
+    <!-- Since Flyway 10, support for each database lives in its own artifact. -->
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-database-postgresql</artifactId>
@@ -73,9 +73,9 @@
       <scope>test</scope>
     </dependency>
     <!--
-      ARMADILHA DO BOOT 4: @WebMvcTest saiu do spring-boot-test-autoconfigure e
-      foi para o módulo próprio spring-boot-webmvc-test, junto com uma mudança
-      de pacote. spring-boot-starter-test sozinho não a traz mais.
+      BOOT 4 PITFALL: @WebMvcTest moved out of spring-boot-test-autoconfigure
+      into its own spring-boot-webmvc-test module, with a package change.
+      spring-boot-starter-test alone no longer brings it.
     -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -88,11 +88,11 @@
       <scope>test</scope>
     </dependency>
     <!--
-      Testcontainers 2.x renomeou TODOS os módulos com o prefixo "testcontainers-".
-      O que na linha 1.x era org.testcontainers:postgresql agora é
-      org.testcontainers:testcontainers-postgresql. Os nomes antigos pararam na
-      1.21.4 e não existem na 2.x — copiar um pom de tutorial de Boot 3 aqui
-      quebra a resolução de dependências.
+      Testcontainers 2.x renamed ALL modules with a "testcontainers-" prefix.
+      What was org.testcontainers:postgresql in 1.x is now
+      org.testcontainers:testcontainers-postgresql. The old names stopped at
+      1.21.4 and do not exist in 2.x, so copying a Boot 3 tutorial pom here
+      breaks dependency resolution.
     -->
     <dependency>
       <groupId>org.testcontainers</groupId>
@@ -109,10 +109,11 @@
       </plugin>
 
       <!--
-        Convenção do Maven: surefire roda *Test (unitários, na fase `test`) e
-        failsafe roda *IT (integração, na fase `verify`). Sem declarar o failsafe,
-        as classes *IT COMPILAM mas NUNCA EXECUTAM, e o build fica verde sem ter
-        testado nada. Por isso `make api-test` chama `verify`, não `test`.
+        Maven convention: surefire runs *Test (unit, in the `test` phase) and
+        failsafe runs *IT (integration, in the `verify` phase). Without declaring
+        failsafe, *IT classes COMPILE but NEVER RUN, and the build stays green
+        without having tested anything. That is why `make api-test` calls
+        `verify`, not `test`.
       -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

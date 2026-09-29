@@ -1,11 +1,11 @@
 package uk.gov.study.landregistry.config;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 import uk.gov.study.landregistry.AbstractPostgresIT;
 
 import java.nio.file.Files;
@@ -15,37 +15,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 /**
- * Falha se o contrato REST mudar sem que docs/openapi.json seja atualizado.
+ * Fails if the REST contract changes without api/openapi.json being updated.
  *
- * Para atualizar o snapshot depois de uma mudança intencional: make openapi
+ * To update the snapshot after an intended change: make openapi
  */
 @AutoConfigureMockMvc
 class OpenApiSnapshotIT extends AbstractPostgresIT {
 
-    private static final Path SNAPSHOT = Path.of("..", "docs", "openapi.json");
+    // Tests run with api/ as the working directory.
+    private static final Path SNAPSHOT = Path.of("openapi.json");
 
     @Autowired
     private MockMvc mockMvc;
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    @Autowired
+    private JsonMapper mapper;
 
     @Test
-    void contratoBateComOSnapshotVersionado() throws Exception {
-        String atual = mockMvc.perform(get("/v3/api-docs"))
+    void contractMatchesTheCommittedSnapshot() throws Exception {
+        String current = mockMvc.perform(get("/v3/api-docs"))
                 .andReturn().getResponse().getContentAsString();
 
         assertThat(SNAPSHOT)
-                .as("docs/openapi.json não existe — rode 'make openapi' para criá-lo")
+                .as("api/openapi.json does not exist; run 'make openapi' to create it")
                 .exists();
 
-        JsonNode esperado = mapper.readTree(Files.readString(SNAPSHOT));
-        JsonNode gerado = mapper.readTree(atual);
+        JsonNode expected = mapper.readTree(Files.readString(SNAPSHOT));
+        JsonNode generated = mapper.readTree(current);
 
-        assertThat(gerado)
+        assertThat(generated)
                 .as("""
-                        O contrato REST mudou mas docs/openapi.json não foi atualizado.
-                        Se a mudança for intencional, rode: make openapi
-                        e inclua o arquivo no mesmo commit da mudança.""")
-                .isEqualTo(esperado);
+                        The REST contract changed but api/openapi.json was not updated.
+                        If the change is intended, run: make openapi
+                        and commit the file together with the change.""")
+                .isEqualTo(expected);
     }
 }

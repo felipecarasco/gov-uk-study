@@ -6,11 +6,15 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
- * Base para todo teste que toca o banco.
+ * Base class for every test that touches the database.
  *
- * O container é estático e nunca chamado com stop(): sobe uma vez por JVM de teste
- * e o Ryuk (container acessório do Testcontainers) limpa no fim. Torná-lo de
- * instância faria subir um PostgreSQL por classe de teste, o que é lento sem ganho.
+ * The container is static and never stop()ped: it starts once per test JVM and
+ * Ryuk (Testcontainers' sidecar container) cleans up at the end. Making it an
+ * instance field would start one PostgreSQL per test class, which is slow for
+ * no gain.
+ *
+ * There is no rollback between tests: rows a test writes stay visible to every
+ * later test in the run. Never count rows or reuse a literal key across tests.
  */
 @SpringBootTest
 public abstract class AbstractPostgresIT {

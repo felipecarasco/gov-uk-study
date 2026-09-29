@@ -12,8 +12,8 @@ class LandRegistryApplicationTest extends AbstractPostgresIT {
     private JdbcClient jdbcClient;
 
     @Test
-    void contextoSobeEConectaNoBanco() {
-        Integer resultado = jdbcClient.sql("SELECT 1").query(Integer.class).single();
-        assertThat(resultado).isEqualTo(1);
+    void contextStartsAndReachesTheDatabase() {
+        Integer result = jdbcClient.sql("SELECT 1").query(Integer.class).single();
+        assertThat(result).isEqualTo(1);
     }
 }

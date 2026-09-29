@@ -26,7 +26,7 @@ class TitleControllerTest {
     @MockitoBean
     private TitleRepository repository;
 
-    private static TitleDetail exemplo() {
+    private static TitleDetail example() {
         return new TitleDetail(
                 "SGL123456",
                 Tenure.FREEHOLD,
@@ -41,8 +41,8 @@ class TitleControllerTest {
     }
 
     @Test
-    void devolveOTituloEmJson() throws Exception {
-        when(repository.findByTitleNumber("SGL123456")).thenReturn(Optional.of(exemplo()));
+    void returnsTheTitleAsJson() throws Exception {
+        when(repository.findByTitleNumber("SGL123456")).thenReturn(Optional.of(example()));
 
         mockMvc.perform(get("/api/v1/titles/SGL123456").accept("application/json"))
                 .andExpect(status().isOk())
@@ -59,15 +59,15 @@ class TitleControllerTest {
     }
 
     @Test
-    void aceitaNumeroDeTituloEmMinusculas() throws Exception {
-        when(repository.findByTitleNumber(any())).thenReturn(Optional.of(exemplo()));
+    void acceptsALowerCaseTitleNumber() throws Exception {
+        when(repository.findByTitleNumber(any())).thenReturn(Optional.of(example()));
 
         mockMvc.perform(get("/api/v1/titles/sgl123456").accept("application/json"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void devolveProblemDetailQuandoTituloNaoExiste() throws Exception {
+    void returnsAProblemDetailWhenTheTitleDoesNotExist() throws Exception {
         when(repository.findByTitleNumber("ZZ000000")).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/v1/titles/ZZ000000").accept("application/json"))

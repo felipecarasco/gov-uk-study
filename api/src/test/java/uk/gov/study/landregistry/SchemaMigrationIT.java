@@ -14,8 +14,8 @@ class SchemaMigrationIT extends AbstractPostgresIT {
     private JdbcClient jdbcClient;
 
     @Test
-    void criaAsTresTabelasDeLeitura() {
-        List<String> tabelas = jdbcClient.sql("""
+    void createsTheThreeReadTables() {
+        List<String> tables = jdbcClient.sql("""
                 SELECT table_name
                 FROM information_schema.tables
                 WHERE table_schema = 'public'
@@ -24,12 +24,12 @@ class SchemaMigrationIT extends AbstractPostgresIT {
                 .query(String.class)
                 .list();
 
-        assertThat(tabelas).contains("title", "proprietor", "charge");
+        assertThat(tables).contains("title", "proprietor", "charge");
     }
 
     @Test
-    void titleNumberEhUnico() {
-        Integer restricoes = jdbcClient.sql("""
+    void titleNumberIsUnique() {
+        Integer constraints = jdbcClient.sql("""
                 SELECT count(*)
                 FROM information_schema.table_constraints
                 WHERE table_name = 'title'
@@ -38,17 +38,17 @@ class SchemaMigrationIT extends AbstractPostgresIT {
                 .query(Integer.class)
                 .single();
 
-        assertThat(restricoes).isGreaterThanOrEqualTo(1);
+        assertThat(constraints).isGreaterThanOrEqualTo(1);
     }
 
     @Test
-    void existeIndiceDeBuscaPorPostcode() {
-        List<String> indices = jdbcClient.sql("""
+    void hasThePostcodeSearchIndex() {
+        List<String> indexes = jdbcClient.sql("""
                 SELECT indexname FROM pg_indexes WHERE tablename = 'title'
                 """)
                 .query(String.class)
                 .list();
 
-        assertThat(indices).contains("idx_title_postcode_normalised");
+        assertThat(indexes).contains("idx_title_postcode_normalised");
     }
 }

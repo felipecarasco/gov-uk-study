@@ -17,22 +17,22 @@
     <span class="govuk-caption-l">Title register summary</span>
     <h1 class="govuk-heading-l">{{ title.titleNumber }}</h1>
 
-    {% set endereco = [title.address.line1, title.address.line2, title.address.town, title.address.postcode] | select | join('<br>') %}
+    {% set address = [title.address.line1, title.address.line2, title.address.town, title.address.postcode] | select | join('<br>') %}
 
-    {% set linhas = [
-      {'key': {'text': 'Property address'}, 'value': {'html': endereco}},
+    {% set rows = [
+      {'key': {'text': 'Property address'}, 'value': {'html': address}},
       {'key': {'text': 'Tenure'}, 'value': {'text': title.tenure | capitalize}},
       {'key': {'text': 'Class of title'}, 'value': {'text': title.classOfTitle}}
     ] %}
 
     {% if title.pricePaidPence %}
-      {% set linhas = linhas + [
+      {% set rows = rows + [
         {'key': {'text': 'Price paid'}, 'value': {'text': title.pricePaidPence | pounds}},
         {'key': {'text': 'Date of sale'}, 'value': {'text': title.pricePaidDate | govuk_date}}
       ] %}
     {% endif %}
 
-    {{ govukSummaryList({'rows': linhas}) }}
+    {{ govukSummaryList({'rows': rows}) }}
 
     <h2 class="govuk-heading-m">Registered proprietors</h2>
 

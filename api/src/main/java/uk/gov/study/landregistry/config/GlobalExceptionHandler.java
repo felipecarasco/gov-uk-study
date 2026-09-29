@@ -19,16 +19,17 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Traduz exceções de domínio para respostas RFC 9457 (Problem Details).
+ * Turns domain exceptions into RFC 9457 (Problem Details) responses.
  *
- * O Flask consome esse formato e o converte no error summary do GDS, então os
- * campos aqui são contrato entre os dois serviços — mudanças precisam ser
- * refletidas no lado Python.
+ * Flask consumes this format and turns it into the GOV.UK error summary, so the
+ * fields here are a contract between the two services: changes must be mirrored
+ * on the Python side.
+ *
+ * Extends ResponseEntityExceptionHandler so that Spring Boot's own
+ * ProblemDetailsExceptionHandler backs off (it is @ConditionalOnMissingBean on
+ * this type). Otherwise Boot's handler, registered with @Order(0), wins every
+ * Spring MVC exception, including validation, and our overrides never run.
  */
-// Extends ResponseEntityExceptionHandler so that Spring Boot's own
-// ProblemDetailsExceptionHandler backs off (it is @ConditionalOnMissingBean on
-// this type). Otherwise Boot's handler, registered with @Order(0), wins every
-// Spring MVC exception, including validation, and our overrides never run.
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 

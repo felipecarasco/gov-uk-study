@@ -5,7 +5,7 @@ public class TitleNotFoundException extends RuntimeException {
     private final String titleNumber;
 
     public TitleNotFoundException(String titleNumber) {
-        super("Nenhum título encontrado com o número " + titleNumber);
+        super("No title found with the number " + titleNumber);
         this.titleNumber = titleNumber;
     }
 

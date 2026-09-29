@@ -6,8 +6,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * pricePaidPence e pricePaidDate são null juntos ou preenchidos juntos —
- * há um CHECK no banco garantindo isso.
+ * pricePaidPence and pricePaidDate are either both null or both set; a CHECK in
+ * the database guarantees it.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record TitleDetail(

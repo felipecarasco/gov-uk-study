@@ -14,9 +14,9 @@ def create_app(config_overrides=None):
     if config_overrides:
         app.config.update(config_overrides)
 
-    # As macros do GOV.UK vivem dentro dos pacotes instalados, não em app/templates.
-    # O PrefixLoader mapeia o prefixo do caminho ("govuk_frontend_jinja/...") para
-    # o pacote correspondente; o ChoiceLoader tenta primeiro os templates do app.
+    # The GOV.UK macros live inside the installed packages, not in app/templates.
+    # PrefixLoader maps the path prefix ("govuk_frontend_jinja/...") to the
+    # matching package; ChoiceLoader tries the app's own templates first.
     app.jinja_loader = ChoiceLoader(
         [
             PackageLoader("app"),
@@ -29,23 +29,23 @@ def create_app(config_overrides=None):
         ]
     )
 
-    # Registra o helper wtforms_errors(), usado pelo error summary nos templates.
+    # Registers the wtforms_errors() helper used by the error summary in templates.
     WTFormsHelpers(app)
 
     @app.template_filter("pounds")
     def format_pounds(pence):
-        """Converte pence em libras formatadas. Aritmética inteira, sem float."""
+        """Formats pence as pounds. Integer arithmetic, no float."""
         if pence is None:
             return ""
-        libras, resto = divmod(int(pence), 100)
-        return f"£{libras:,}.{resto:02d}"
+        pounds, remainder = divmod(int(pence), 100)
+        return f"£{pounds:,}.{remainder:02d}"
 
     @app.template_filter("govuk_date")
     def format_govuk_date(iso_date):
-        """Converte '2021-11-02' em '2 November 2021'.
+        """Turns '2021-11-02' into '2 November 2021'.
 
-        O guia de estilo do GOV.UK exige dia sem zero à esquerda, mês por extenso
-        e ano com quatro dígitos. Ver style guide, verbete 'dates'.
+        The GOV.UK style guide requires the day without a leading zero, the month
+        in full and a four-digit year. See the style guide, entry 'dates'.
         """
         if not iso_date:
             return ""

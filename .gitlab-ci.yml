@@ -1,9 +1,8 @@
-# Equivalente ao .github/workflows/ci.yml, no formato do GitLab CI.
+# Equivalent to .github/workflows/ci.yml, in GitLab CI format.
 #
-# Este arquivo NÃO é executado por nenhum runner: o repositório vive no GitHub.
-# Ele existe porque o ambiente-alvo (HMLR) usa GitLab self-hosted com Jenkins,
-# e expressar o mesmo pipeline nos dois formatos documenta o entendimento
-# daquele ambiente.
+# This file is not run by any runner: the repository is hosted on GitHub. It
+# exists because the target environment uses self-hosted GitLab with Jenkins,
+# and keeping the same pipeline in each format makes them easy to compare.
 
 stages:
   - test

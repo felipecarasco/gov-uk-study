@@ -46,8 +46,8 @@ public class TitleRepository {
     }
 
     /**
-     * Normaliza um postcode do Reino Unido para comparação: maiúsculas, sem espaços.
-     * Usado pela busca por postcode na fase 2 e pelo seed.
+     * Normalises a UK postcode for comparison: upper case, no spaces.
+     * Used by the postcode search in phase 2 and by the seed.
      */
     public static String normalisePostcode(String raw) {
         if (raw == null) {

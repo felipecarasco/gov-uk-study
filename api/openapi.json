@@ -2,7 +2,7 @@
     "openapi": "3.1.0",
     "info": {
         "title": "Land Registry API",
-        "description": "API de consulta ao registro de im\u00f3veis. Projeto de estudo \u2014 os dados s\u00e3o fict\u00edcios e n\u00e3o representam im\u00f3veis reais.",
+        "description": "Land register lookup API. Study project: the data is fictitious and does not describe real properties.",
         "license": {
             "name": "MIT"
         },
@@ -11,7 +11,7 @@
     "servers": [
         {
             "url": "/",
-            "description": "Este servidor"
+            "description": "This server"
         }
     ],
     "paths": {

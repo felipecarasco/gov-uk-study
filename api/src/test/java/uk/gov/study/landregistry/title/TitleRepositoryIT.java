@@ -15,11 +15,11 @@ class TitleRepositoryIT extends AbstractPostgresIT {
     private TitleRepository repository;
 
     @Test
-    void encontraTituloComProprietarioEOnus() {
-        Optional<TitleDetail> encontrado = repository.findByTitleNumber("SGL123456");
+    void findsATitleWithItsProprietorAndCharge() {
+        Optional<TitleDetail> found = repository.findByTitleNumber("SGL123456");
 
-        assertThat(encontrado).isPresent();
-        TitleDetail t = encontrado.orElseThrow();
+        assertThat(found).isPresent();
+        TitleDetail t = found.orElseThrow();
 
         assertThat(t.titleNumber()).isEqualTo("SGL123456");
         assertThat(t.tenure()).isEqualTo(Tenure.FREEHOLD);
@@ -37,9 +37,9 @@ class TitleRepositoryIT extends AbstractPostgresIT {
     }
 
     @Test
-    void naoDuplicaAoCombinarVariosProprietariosEVariosOnus() {
-        // SGL123457 tem 2 proprietários e 2 ônus. Um JOIN ingênuo devolve 4 linhas;
-        // o extractor precisa deduplicar por id e produzir 2 e 2.
+    void doesNotDuplicateWhenSeveralProprietorsMeetSeveralCharges() {
+        // SGL123457 has 2 proprietors and 2 charges. A naive JOIN returns 4 rows;
+        // the extractor has to deduplicate by id and produce 2 and 2.
         TitleDetail t = repository.findByTitleNumber("SGL123457").orElseThrow();
 
         assertThat(t.proprietors()).hasSize(2)
@@ -51,7 +51,7 @@ class TitleRepositoryIT extends AbstractPostgresIT {
     }
 
     @Test
-    void devolveListasVaziasQuandoNaoHaOnus() {
+    void returnsEmptyListsWhenThereAreNoCharges() {
         TitleDetail t = repository.findByTitleNumber("SGL123458").orElseThrow();
 
         assertThat(t.proprietors()).hasSize(1);
@@ -61,17 +61,17 @@ class TitleRepositoryIT extends AbstractPostgresIT {
     }
 
     @Test
-    void devolveVazioQuandoTituloNaoExiste() {
+    void returnsEmptyWhenTheTitleDoesNotExist() {
         assertThat(repository.findByTitleNumber("ZZ000000")).isEmpty();
     }
 
     @Test
-    void buscaEhInsensivelACaixa() {
+    void lookupIgnoresCase() {
         assertThat(repository.findByTitleNumber("sgl123456")).isPresent();
     }
 
     @Test
-    void normalizaPostcodeRemovendoEspacosEMaiusculizando() {
+    void normalisesPostcodeByRemovingSpacesAndUpperCasing() {
         assertThat(TitleRepository.normalisePostcode(" cr0 2qq ")).isEqualTo("CR02QQ");
         assertThat(TitleRepository.normalisePostcode("EN1  4TT")).isEqualTo("EN14TT");
         assertThat(TitleRepository.normalisePostcode(null)).isEqualTo("");

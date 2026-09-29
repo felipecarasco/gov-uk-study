@@ -1,22 +1,23 @@
-# Imagem do front-end Flask, construída para rodar no OpenShift.
-# Vale o mesmo cuidado com UID arbitrário descrito em api/Dockerfile.
+# Flask front-end image, built to run on OpenShift.
+# The same arbitrary-UID care described in api/Dockerfile applies here.
 
-# ---------- assets do GOV.UK ----------
-# O CSS/JS do GOV.UK Frontend vem do npm e é gitignorado (ver web/package.json e
-# o alvo `assets` do Makefile). Sem este estágio a imagem sobe sem estilo algum.
+# ---------- GOV.UK assets ----------
+# The GOV.UK Frontend CSS/JS comes from npm and is gitignored (see
+# web/package.json and the `assets` Makefile target). Without this stage the
+# image would serve pages with no styling at all.
 FROM node:22-slim AS assets
 WORKDIR /assets
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 
-# ---------- dependências Python ----------
+# ---------- Python dependencies ----------
 FROM python:3.12-slim AS deps
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 WORKDIR /app
 
-# `--frozen` faz o build falhar se o uv.lock estiver defasado em relação ao
-# pyproject.toml, em vez de resolver versões novas silenciosamente.
-# `--no-default-groups` deixa pytest, ruff e afins fora da imagem.
+# --frozen fails the build if uv.lock is out of date with pyproject.toml,
+# instead of silently resolving new versions.
+# --no-default-groups keeps pytest, ruff and friends out of the image.
 COPY pyproject.toml uv.lock ./
 ENV UV_PROJECT_ENVIRONMENT=/venv
 RUN uv sync --frozen --no-default-groups --no-install-project
@@ -39,28 +40,29 @@ USER 1001
 
 EXPOSE 5000
 
-# A página inicial é o sinal de readiness: renderiza um template do GOV.UK e não
-# depende da API, então responde 200 mesmo se o back-end estiver fora — o que é
-# o comportamento desejado, o pod do front-end não deve reiniciar por causa dela.
-# urllib em vez de curl: evita instalar pacote só para a probe.
+# The start page is the readiness signal: it renders a GOV.UK template and does
+# not depend on the API, so it answers 200 even when the back end is down. That
+# is intended: the front-end pod should not restart because of the API.
+# urllib rather than curl: no package installed just for the probe.
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \
   CMD ["python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:5000/', timeout=3).read()"]
 
-# A API é alcançada pelo Service do OpenShift; localhost é só o default de dev.
+# The API is reached through the OpenShift Service; localhost is only the dev default.
 ENV API_BASE_URL=http://localhost:8080
 
-# O servidor de desenvolvimento do Flask não vai para imagem nenhuma. O gunicorn
-# recebe a factory `create_app()` direto, sem precisar de um wsgi.py.
+# The Flask development server never goes into an image. gunicorn takes the
+# create_app() factory directly, with no wsgi.py.
 #
-# Workers síncronos: cada request fica bloqueado numa chamada HTTP à API, então o
-# que importa aqui é concorrência de I/O, não CPU. Dois workers com quatro
-# threads cada dão 8 requests simultâneos num container pequeno.
-# `--no-control-socket`: o gunicorn 26 abre um socket de controle em
-# $XDG_RUNTIME_DIR/gunicorn.ctl ou, na falta dele, $HOME/.gunicorn/. Sob UID
-# arbitrário o usuário não está em /etc/passwd, $HOME resolve para "/" e o
-# processo sobe servindo requests mas logando "Control server error: Permission
-# denied" a cada boot. Como não se administra o gunicorn por dentro do pod
-# (usa-se `oc rsh`/redeploy), o socket é desligado em vez de ganhar um diretório.
+# Sync workers with threads: each request blocks on an HTTP call to the API, so
+# what matters is I/O concurrency, not CPU. Two workers with four threads each
+# give 8 concurrent requests in a small container.
+#
+# --no-control-socket: gunicorn 26 opens a control socket in
+# $XDG_RUNTIME_DIR/gunicorn.ctl or, failing that, $HOME/.gunicorn/. Under an
+# arbitrary UID the user is not in /etc/passwd, $HOME resolves to "/", and the
+# process serves requests but logs "Control server error: Permission denied" on
+# every boot. Nobody manages gunicorn from inside the pod (you use `oc rsh` or a
+# redeploy), so the socket is turned off rather than given a directory.
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", \
      "--workers", "2", "--threads", "4", \
      "--no-control-socket", \

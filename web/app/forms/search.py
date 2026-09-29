@@ -3,13 +3,13 @@ from govuk_frontend_wtf.wtforms_widgets import GovSubmitInput, GovTextInput
 from wtforms import StringField, SubmitField
 from wtforms.validators import InputRequired, Regexp
 
-# Números de título do HMLR: 2 ou 3 letras de prefixo do registro,
-# seguidas de 4 a 6 dígitos. Ex.: SGL123456, MX987654.
+# HMLR title numbers: a 2 or 3 letter registry prefix followed by 4 to 6
+# digits. For example SGL123456, MX987654.
 TITLE_NUMBER_PATTERN = r"^[A-Z]{2,3}\d{4,6}$"
 
 
-def _upper_trim(valor):
-    return valor.strip().upper() if isinstance(valor, str) else valor
+def _upper_trim(value):
+    return value.strip().upper() if isinstance(value, str) else value
 
 
 class TitleNumberForm(FlaskForm):
