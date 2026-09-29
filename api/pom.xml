@@ -67,6 +67,17 @@
       <scope>runtime</scope>
     </dependency>
 
+    <!--
+      Not managed by the Spring Boot BOM, so the version is pinned here.
+      OpenPDF 3 moved from com.lowagie.* to org.openpdf.*: most examples online
+      still use the old package names, which do not exist in this version.
+    -->
+    <dependency>
+      <groupId>com.github.librepdf</groupId>
+      <artifactId>openpdf</artifactId>
+      <version>3.0.5</version>
+    </dependency>
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
