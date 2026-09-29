@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -25,7 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(OrderController.class)
-@Import({OrderService.class, OrderReferenceGenerator.class})
+@Import({OrderService.class, OrderReferenceGenerator.class, OfficialCopyRenderer.class})
 class OrderControllerTest {
 
     @Autowired
@@ -200,6 +201,49 @@ class OrderControllerTest {
         when(orderRepository.findByReference(any())).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/api/v1/orders/LR-NOTEXIST/payment"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.type").value("https://land-registry.study/problems/order-not-found"));
+    }
+
+    // What the Flask client sends: the PDF when it works, Problem Details when not.
+    private static final MediaType[] PDF_OR_PROBLEM =
+            {MediaType.APPLICATION_PDF, MediaType.APPLICATION_PROBLEM_JSON};
+
+    @Test
+    void downloadsThePdfOfAPaidOrder() throws Exception {
+        when(orderRepository.findByReference("LR-AAAA2222")).thenReturn(Optional.of(paidOrder()));
+        when(titleRepository.findByTitleNumber("SGL123456")).thenReturn(Optional.of(TestTitles.example()));
+
+        byte[] body = mockMvc.perform(get("/api/v1/orders/LR-AAAA2222/document").accept(PDF_OR_PROBLEM))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andExpect(header().string("Content-Disposition",
+                        "attachment; filename=\"LR-AAAA2222-title-register.pdf\""))
+                .andReturn().getResponse().getContentAsByteArray();
+
+        assertThat(PdfText.of(body)).contains("SGL123456").contains("LR-AAAA2222");
+    }
+
+    @Test
+    void refusesTheDocumentOfAnUnpaidOrder() throws Exception {
+        RegisterOrder unpaid = new RegisterOrder(
+                "LR-AAAA2222", "SGL123456", DocumentType.TITLE_REGISTER,
+                "Sam Okonkwo", "sam@example.com", "3 Bramber Lane",
+                OrderStatus.PENDING_PAYMENT, 300L, Instant.parse("2026-09-10T12:00:00Z"), null);
+        when(orderRepository.findByReference("LR-AAAA2222")).thenReturn(Optional.of(unpaid));
+
+        mockMvc.perform(get("/api/v1/orders/LR-AAAA2222/document").accept(PDF_OR_PROBLEM))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+                .andExpect(jsonPath("$.type").value("https://land-registry.study/problems/order-not-paid"))
+                .andExpect(jsonPath("$.reference").value("LR-AAAA2222"));
+    }
+
+    @Test
+    void theDocumentOfAnUnknownOrderIsNotFound() throws Exception {
+        when(orderRepository.findByReference(any())).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/v1/orders/LR-NOTEXIST/document").accept(PDF_OR_PROBLEM))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.type").value("https://land-registry.study/problems/order-not-found"));
     }

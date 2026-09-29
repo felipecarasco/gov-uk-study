@@ -67,6 +67,8 @@ does.
 | `GET` | `/api/v1/titles/{titleNumber}` | Title summary |
 | `POST` | `/api/v1/orders` | Create an order for a copy of the register |
 | `GET` | `/api/v1/orders/{reference}` | Fetch an order |
+| `POST` | `/api/v1/orders/{reference}/payment` | Simulated payment; paying twice changes nothing |
+| `GET` | `/api/v1/orders/{reference}/document` | The copy as a PDF, once the order is paid (409 before) |
 
 ## Layout
 

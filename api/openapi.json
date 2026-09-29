@@ -186,6 +186,37 @@
                     }
                 }
             }
+        },
+        "/api/v1/orders/{reference}/document": {
+            "get": {
+                "tags": [
+                    "order-controller"
+                ],
+                "operationId": "document",
+                "parameters": [
+                    {
+                        "name": "reference",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "byte"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {

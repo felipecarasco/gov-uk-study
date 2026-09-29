@@ -18,6 +18,7 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import uk.gov.study.landregistry.order.OrderNotFoundException;
+import uk.gov.study.landregistry.order.OrderNotPaidException;
 import uk.gov.study.landregistry.title.InvalidCursorException;
 import uk.gov.study.landregistry.title.TitleNotFoundException;
 
@@ -63,6 +64,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         problem.setType(URI.create(BASE_TYPE + "order-not-found"));
         problem.setTitle("Order not found");
+        problem.setProperty("reference", ex.reference());
+
+        return problem;
+    }
+
+    @ExceptionHandler(OrderNotPaidException.class)
+    ProblemDetail handleOrderNotPaid(OrderNotPaidException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                "Order " + ex.reference() + " must be paid before its document can be downloaded");
+
+        problem.setType(URI.create(BASE_TYPE + "order-not-paid"));
+        problem.setTitle("Order not paid");
         problem.setProperty("reference", ex.reference());
 
         return problem;

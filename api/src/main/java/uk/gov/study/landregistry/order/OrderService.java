@@ -17,11 +17,17 @@ public class OrderService {
     private final OrderRepository orders;
     private final OrderReferenceGenerator references;
     private final TitleRepository titles;
+    private final OfficialCopyRenderer renderer;
 
-    OrderService(OrderRepository orders, OrderReferenceGenerator references, TitleRepository titles) {
+    OrderService(
+            OrderRepository orders,
+            OrderReferenceGenerator references,
+            TitleRepository titles,
+            OfficialCopyRenderer renderer) {
         this.orders = orders;
         this.references = references;
         this.titles = titles;
+        this.renderer = renderer;
     }
 
     public RegisterOrder create(CreateOrderRequest request) {
@@ -64,5 +70,17 @@ public class OrderService {
     public RegisterOrder findByReference(String reference) {
         return orders.findByReference(reference)
                 .orElseThrow(() -> new OrderNotFoundException(reference));
+    }
+
+    public OfficialCopy document(String reference) {
+        RegisterOrder order = findByReference(reference);
+        if (order.status() != OrderStatus.PAID) {
+            throw new OrderNotPaidException(reference);
+        }
+        TitleDetail title = titles.findByTitleNumber(order.titleNumber())
+                .orElseThrow(() -> new TitleNotFoundException(order.titleNumber()));
+
+        String kind = order.documentType() == DocumentType.TITLE_REGISTER ? "title-register" : "title-plan";
+        return new OfficialCopy(order.reference() + "-" + kind + ".pdf", renderer.render(order, title));
     }
 }
