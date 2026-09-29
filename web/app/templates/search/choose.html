@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{%- from 'govuk_frontend_jinja/components/error-summary/macro.html' import govukErrorSummary -%}
+{%- from 'govuk_frontend_jinja/components/back-link/macro.html' import govukBackLink -%}
+
+{% block pageTitle %}{% if form.errors %}Error: {% endif %}How do you want to search? – GOV.UK{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({'text': 'Back', 'href': url_for('main.index')}) }}
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+
+    {% if form.errors %}
+      {{ govukErrorSummary(wtforms_errors(form)) }}
+    {% endif %}
+
+    <form action="" method="post" novalidate>
+      {{ form.csrf_token }}
+
+      {{ form.search_by(params={
+        'fieldset': {
+          'legend': {
+            'text': 'How do you want to search?',
+            'classes': 'govuk-fieldset__legend--l',
+            'isPageHeading': true
+          }
+        }
+      }) }}
+
+      {{ form.submit(params={'text': 'Continue'}) }}
+    </form>
+
+  </div>
+</div>
+{% endblock %}

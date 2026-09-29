@@ -3,9 +3,22 @@ from flask import Blueprint, redirect, render_template, request, url_for
 from app import postcodes
 
 from app.api_client import ApiError, TitleNotFound, ValidationFailed, get_api_client
-from app.forms.search import PostcodeForm, TitleNumberForm
+from app.forms.search import PostcodeForm, SearchByForm, TitleNumberForm
 
 bp = Blueprint("search", __name__, url_prefix="/search")
+
+
+@bp.route("", methods=["GET", "POST"])
+def choose():
+    form = SearchByForm()
+
+    if form.validate_on_submit():
+        endpoint = (
+            "search.title_number" if form.search_by.data == "title-number" else "search.postcode"
+        )
+        return redirect(url_for(endpoint))
+
+    return render_template("search/choose.html", form=form)
 
 
 @bp.route("/title-number", methods=["GET", "POST"])

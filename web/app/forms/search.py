@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
-from govuk_frontend_wtf.wtforms_widgets import GovSubmitInput, GovTextInput
-from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired, InputRequired, Regexp, ValidationError
+from govuk_frontend_wtf.wtforms_widgets import GovRadioInput, GovSubmitInput, GovTextInput
+from wtforms import RadioField, StringField, SubmitField
+from wtforms.validators import AnyOf, DataRequired, InputRequired, Regexp, ValidationError
 
 from app import postcodes
 
@@ -51,3 +51,25 @@ class PostcodeForm(FlaskForm):
     )
 
     submit = SubmitField("Search", widget=GovSubmitInput())
+
+
+SEARCH_BY = [("title-number", "Title number"), ("postcode", "Postcode")]
+
+_SELECT_HOW = "Select how you want to search"
+
+
+class SearchByForm(FlaskForm):
+    # validate_choice=False: RadioField's own message ("Not a valid choice.") is
+    # not GOV.UK wording, so AnyOf does that check with the right message.
+    search_by = RadioField(
+        "How do you want to search?",
+        widget=GovRadioInput(),
+        choices=SEARCH_BY,
+        validate_choice=False,
+        validators=[
+            InputRequired(message=_SELECT_HOW),
+            AnyOf([value for value, _ in SEARCH_BY], message=_SELECT_HOW),
+        ],
+    )
+
+    submit = SubmitField("Continue", widget=GovSubmitInput())

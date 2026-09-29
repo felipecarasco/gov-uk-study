@@ -18,7 +18,7 @@ def test_start_page_has_a_title_and_a_start_button(client):
     button = soup.select_one("a.govuk-button--start")
     assert button is not None, "the green start page button is missing"
     assert button.get_text(strip=True).startswith("Start now")
-    assert button["href"] == "/search/title-number"
+    assert button["href"] == "/search"
 
 
 def test_start_page_loads_the_govuk_css(client):
