@@ -49,6 +49,18 @@ public class OrderService {
         return order;
     }
 
+    /**
+     * Pays for an order. Paying an order that is already paid changes nothing
+     * and returns it as it is, so a double click or a retried request can never
+     * take the money twice.
+     */
+    public RegisterOrder pay(String reference) {
+        orders.markPaid(reference, Instant.now().truncatedTo(ChronoUnit.MICROS));
+        // Whether or not this call was the one that paid, the order as stored is
+        // the answer; an unknown reference throws OrderNotFoundException here.
+        return findByReference(reference);
+    }
+
     public RegisterOrder findByReference(String reference) {
         return orders.findByReference(reference)
                 .orElseThrow(() -> new OrderNotFoundException(reference));

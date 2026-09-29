@@ -30,6 +30,11 @@ public class OrderController {
                 .body(created);
     }
 
+    @PostMapping("/{reference}/payment")
+    public RegisterOrder pay(@PathVariable String reference) {
+        return service.pay(reference);
+    }
+
     @GetMapping("/{reference}")
     public RegisterOrder get(@PathVariable String reference) {
         return service.findByReference(reference);

@@ -45,6 +45,36 @@
                 }
             }
         },
+        "/api/v1/orders/{reference}/payment": {
+            "post": {
+                "tags": [
+                    "order-controller"
+                ],
+                "operationId": "pay",
+                "parameters": [
+                    {
+                        "name": "reference",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RegisterOrder"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/titles": {
             "get": {
                 "tags": [

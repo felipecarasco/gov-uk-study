@@ -17,6 +17,8 @@ import java.util.Optional;
 
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -157,5 +159,48 @@ class OrderControllerTest {
                 .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
                 .andExpect(jsonPath("$.type").value("https://land-registry.study/problems/order-not-found"))
                 .andExpect(jsonPath("$.reference").value("LR-NOTEXIST"));
+    }
+
+    private static RegisterOrder paidOrder() {
+        return new RegisterOrder(
+                "LR-AAAA2222", "SGL123456", DocumentType.TITLE_REGISTER,
+                "Sam Okonkwo", "sam@example.com", "3 Bramber Lane",
+                OrderStatus.PAID, 300L,
+                Instant.parse("2026-09-10T12:00:00Z"), Instant.parse("2026-09-10T12:05:00Z"));
+    }
+
+    @Test
+    void paysAnOrder() throws Exception {
+        when(orderRepository.markPaid(eq("LR-AAAA2222"), any(Instant.class))).thenReturn(true);
+        when(orderRepository.findByReference("LR-AAAA2222")).thenReturn(Optional.of(paidOrder()));
+
+        mockMvc.perform(post("/api/v1/orders/LR-AAAA2222/payment"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PAID"))
+                .andExpect(jsonPath("$.paidAt").value("2026-09-10T12:05:00Z"));
+
+        verify(orderRepository).markPaid(eq("LR-AAAA2222"), any(Instant.class));
+    }
+
+    @Test
+    void payingAnOrderThatIsAlreadyPaidReturnsItUnchanged() throws Exception {
+        // markPaid finds nothing pending, but the order exists: this is a repeat.
+        when(orderRepository.markPaid(eq("LR-AAAA2222"), any(Instant.class))).thenReturn(false);
+        when(orderRepository.findByReference("LR-AAAA2222")).thenReturn(Optional.of(paidOrder()));
+
+        mockMvc.perform(post("/api/v1/orders/LR-AAAA2222/payment"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PAID"))
+                .andExpect(jsonPath("$.paidAt").value("2026-09-10T12:05:00Z"));
+    }
+
+    @Test
+    void payingAnUnknownOrderIsNotFound() throws Exception {
+        when(orderRepository.markPaid(any(), any())).thenReturn(false);
+        when(orderRepository.findByReference(any())).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/v1/orders/LR-NOTEXIST/payment"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.type").value("https://land-registry.study/problems/order-not-found"));
     }
 }
