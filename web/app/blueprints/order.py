@@ -1,6 +1,6 @@
-from flask import Blueprint, abort, redirect, render_template, session, url_for
+from flask import Blueprint, abort, redirect, render_template, request, session, url_for
 
-from app.forms.order import DocumentTypeForm
+from app.forms.order import DocumentTypeForm, YourDetailsForm
 
 bp = Blueprint("order", __name__, url_prefix="/order")
 
@@ -38,8 +38,26 @@ def document_type():
     )
 
 
-@bp.get("/your-details")
+@bp.route("/your-details", methods=["GET", "POST"])
 def your_details():
-    # Placeholder so that url_for("order.your_details") resolves.
-    # Task 6 replaces it with the real page.
+    # On GET the form is filled in from the session, so going back keeps the
+    # answers. On POST only what was submitted counts: a field missing from the
+    # request must not be quietly taken from the session.
+    form = YourDetailsForm(data=session["order"] if request.method == "GET" else None)
+
+    if form.validate_on_submit():
+        _save(
+            applicant_name=form.applicant_name.data,
+            applicant_email=form.applicant_email.data,
+            applicant_address=form.applicant_address.data,
+        )
+        return redirect(url_for("order.check_answers"))
+
+    return render_template("order/your_details.html", form=form)
+
+
+@bp.get("/check-answers")
+def check_answers():
+    # Placeholder so that url_for("order.check_answers") resolves.
+    # Task 7 replaces it with the real page.
     abort(501)

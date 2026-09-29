@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Server-rendered front end for the land register lookup service"
 requires-python = ">=3.12"
 dependencies = [
+    "email-validator==2.3.0",
     "flask==3.1.3",
     "flask-wtf==1.2.2",
     "govuk-frontend-jinja==4.1.0",
