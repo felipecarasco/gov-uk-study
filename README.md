@@ -19,21 +19,41 @@ All data is fictitious. No property, person or lender shown is real.
 The browser talks only to Flask; Flask talks only to the API over REST; only the
 API talks to PostgreSQL.
 
-## Requirements
-
-Docker, JDK 25, [`uv`](https://docs.astral.sh/uv/) and Node (only to fetch the
-GOV.UK Frontend assets).
-
 ## Run
+
+- Front end: <http://localhost:5000>
+- API: <http://localhost:8080>, Swagger UI at `/swagger-ui/index.html`
+
+### With Docker only (Linux, macOS or Windows)
+
+Nothing to install but Docker (Docker Desktop on Windows and macOS):
+
+```bash
+docker compose --profile app up --build
+```
+
+Stop it with `docker compose --profile app down`. The host ports can be changed
+with `WEB_PORT`, `API_PORT` and `DB_PORT`, for example `WEB_PORT=5050` on macOS,
+where AirPlay Receiver often holds port 5000 (in PowerShell:
+`$env:WEB_PORT = "5050"`).
+
+### For development (Linux, macOS or WSL2)
+
+Needs Docker, JDK 25, [`uv`](https://docs.astral.sh/uv/) and Node (only to fetch
+the GOV.UK Frontend assets):
 
 ```bash
 make dev
 ```
 
-- Front end: <http://localhost:5000>
-- API: <http://localhost:8080>, Swagger UI at `/swagger-ui/index.html`
-
 `make help` lists every target.
+
+### On Windows
+
+For development, use WSL2: the `Makefile` and `scripts/dev.sh` are bash. Clone
+the repository inside the WSL file system (for example `~/code`), not under
+`/mnt/c`, where builds are much slower, and turn on Docker Desktop's WSL
+integration for your distribution. Without WSL, use the Docker-only way above.
 
 ## Test
 
@@ -43,7 +63,8 @@ make lint    # ruff
 ```
 
 `make a11y` audits every page and error state with axe-core (WCAG 2.2 AA) and
-checks keyboard access. It needs the service running (`make dev`).
+checks keyboard access. It needs the service running, either way; set
+`A11Y_BASE_URL` if the front end is not on `http://localhost:5000`.
 
 The integration tests start PostgreSQL with Testcontainers, so Docker must be
 running.
