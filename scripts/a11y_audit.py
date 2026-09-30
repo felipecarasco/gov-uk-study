@@ -8,12 +8,14 @@ Needs the whole service running (make dev) and axe-core installed (make assets).
 Run with: make a11y
 """
 
+import os
 import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-BASE = "http://localhost:5000"
+# Point it elsewhere with A11Y_BASE_URL, for example when WEB_PORT is changed.
+BASE = os.environ.get("A11Y_BASE_URL", "http://localhost:5000")
 AXE = (Path(__file__).resolve().parent.parent / "web/node_modules/axe-core/axe.min.js").read_text()
 TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"]
 

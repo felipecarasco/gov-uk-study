@@ -1,3 +1,18 @@
+# Plain `docker compose up` (and `make db-up`) starts only PostgreSQL, for
+# development with `make dev`.
+#
+# With the "app" profile it also builds and starts the API and the front end,
+# so the whole service runs with nothing installed but Docker, on Linux, macOS
+# or Windows:
+#
+#   docker compose --profile app up --build
+#
+# Both application containers run with an arbitrary UID in group 0, like on
+# OpenShift (see api/Dockerfile).
+#
+# Host ports can be changed with DB_PORT, API_PORT and WEB_PORT, for example
+# WEB_PORT=5050 on macOS, where AirPlay Receiver often holds port 5000.
+
 services:
   postgres:
     image: postgres:18
@@ -7,7 +22,7 @@ services:
       POSTGRES_USER: land_registry
       POSTGRES_PASSWORD: land_registry
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - land-registry-data:/var/lib/postgresql
     healthcheck:
@@ -15,6 +30,34 @@ services:
       interval: 3s
       timeout: 3s
       retries: 20
+
+  api:
+    profiles: ["app"]
+    build: ./api
+    user: "1000670000:0"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/land_registry
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    profiles: ["app"]
+    build: ./web
+    user: "1000670000:0"
+    environment:
+      API_BASE_URL: http://api:8080
+      # The front end refuses to start with its built-in development key. This
+      # one is for running locally only; set SECRET_KEY in the environment for
+      # anything else.
+      SECRET_KEY: ${SECRET_KEY:-local-compose-only-change-me}
+    ports:
+      - "${WEB_PORT:-5000}:5000"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   land-registry-data:
