@@ -17,6 +17,19 @@ set -m
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PIDS=()
 
+# Stop before starting anything if a port is taken. Otherwise one service
+# starts, the other fails half a screen of logs later, and the error is easy
+# to miss. /dev/tcp is a bash feature: the connection only succeeds if
+# something is already listening.
+for port in 8080 5000; do
+  if (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null; then
+    echo "Port $port is already in use." >&2
+    command -v lsof >/dev/null && lsof -iTCP:"$port" -sTCP:LISTEN >&2
+    echo "Stop that process (an earlier make dev, or make images-down) and try again." >&2
+    exit 1
+  fi
+done
+
 shutdown() {
   trap - INT TERM EXIT
   echo
