@@ -1,0 +1,15 @@
+# Line endings are fixed here instead of left to each machine's Git settings.
+# Git for Windows converts text files to CRLF on checkout by default, which
+# breaks every shell script run in WSL or in a Linux container
+# ("bad interpreter: /bin/sh^M", "$'\r': command not found").
+* text=auto eol=lf
+
+# Windows batch files are the exception: they need CRLF.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Never convert binary files.
+*.jar binary
+*.png binary
+*.woff binary
+*.woff2 binary
