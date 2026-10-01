@@ -39,14 +39,23 @@ where AirPlay Receiver often holds port 5000 (in PowerShell:
 
 ### For development (Linux, macOS or WSL2)
 
-Needs Docker, JDK 25, [`uv`](https://docs.astral.sh/uv/) and Node (only to fetch
-the GOV.UK Frontend assets):
+Needs Docker, `make`, JDK 25, [`uv`](https://docs.astral.sh/uv/) and Node (only
+to fetch the GOV.UK Frontend assets). The JDK is expected from
+[SDKMAN](https://sdkman.io/), which is where the `Makefile` looks for it; the
+version is pinned in `.sdkmanrc`:
+
+```bash
+sdk install java 25.0.4-tem    # answer Y to make it the default
+```
+
+Then:
 
 ```bash
 make dev
 ```
 
-`make help` lists every target.
+`make help` lists every target. The Docker-only way and `make dev` use the same
+ports: stop one before starting the other.
 
 ### On Windows
 
@@ -64,7 +73,9 @@ make lint    # ruff
 
 `make a11y` audits every page and error state with axe-core (WCAG 2.2 AA) and
 checks keyboard access. It needs the service running, either way; set
-`A11Y_BASE_URL` if the front end is not on `http://localhost:5000`.
+`A11Y_BASE_URL` if the front end is not on `http://localhost:5000`. On a machine
+without Google Chrome (WSL, for example), install a browser for it once with
+`uvx playwright install --with-deps chromium`.
 
 The integration tests start PostgreSQL with Testcontainers, so Docker must be
 running.
