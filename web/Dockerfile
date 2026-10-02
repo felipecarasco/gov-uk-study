@@ -51,8 +51,14 @@ HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \
 # The API is reached through the OpenShift Service; localhost is only the dev default.
 ENV API_BASE_URL=http://localhost:8080
 
+# Application logs as one JSON object per line, like the API's.
+ENV LOG_FORMAT=json
+
 # The Flask development server never goes into an image. gunicorn takes the
 # create_app() factory directly, with no wsgi.py.
+#
+# The access log ends with the X-Request-ID response header, so a request
+# can be found in it by the same id as in the application logs.
 #
 # Sync workers with threads: each request blocks on an HTTP call to the API, so
 # what matters is I/O concurrency, not CPU. Two workers with four threads each
@@ -68,4 +74,5 @@ CMD ["gunicorn", "--bind", "0.0.0.0:5000", \
      "--workers", "2", "--threads", "4", \
      "--no-control-socket", \
      "--access-logfile", "-", "--error-logfile", "-", \
+     "--access-logformat", "%(h)s \"%(r)s\" %(s)s %(b)s %(M)sms requestId=%({x-request-id}o)s", \
      "app:create_app()"]

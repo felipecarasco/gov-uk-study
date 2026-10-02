@@ -94,6 +94,20 @@ make images-down
 The images run as a non-root, arbitrary UID in group 0, which is what OpenShift
 does.
 
+## Logs
+
+Every request gets an id, returned in the `X-Request-ID` header and sent from the
+front end to the API, and both services put it on every log line: in development
+as `[id]` in plain text, in the containers as the `requestId` field of one JSON
+object per line. Each service also logs one line per request, so a click can be
+followed through both:
+
+```bash
+docker compose --profile app logs api web | grep <request id>
+```
+
+Order events are logged by reference only; no applicant details are logged.
+
 ## API
 
 | Method | Path | |
