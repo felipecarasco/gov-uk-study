@@ -1,4 +1,5 @@
 import functools
+import logging
 
 from flask import Blueprint, Response, abort, redirect, render_template, request, session, url_for
 
@@ -12,6 +13,8 @@ from app.forms.order import (
 )
 
 bp = Blueprint("order", __name__, url_prefix="/order")
+
+log = logging.getLogger(__name__)
 
 # Shown before the order exists. The API decides the real amount (OrderService),
 # and the confirmation comes from what it returns; this only has to match it.
@@ -83,6 +86,17 @@ def _placed_here(reference):
     reference exists.
     """
     return reference in session.get("placed_orders", [])
+
+
+def _abort_unless_placed_here(reference):
+    """404 for another browser's order, and a note in the log.
+
+    Someone opening an order they did not place is usually a shared link, but
+    many of them in a row is worth noticing. Only the reference is logged.
+    """
+    if not _placed_here(reference):
+        log.warning("Order %s requested by a browser that did not place it", reference)
+        abort(404)
 
 
 def _save(**fields):
@@ -199,8 +213,7 @@ def check_answers():
 
 @bp.route("/payment/<reference>", methods=["GET", "POST"])
 def payment(reference):
-    if not _placed_here(reference):
-        abort(404)
+    _abort_unless_placed_here(reference)
 
     try:
         order = get_api_client().get_order(reference)
@@ -232,8 +245,7 @@ def payment(reference):
 
 @bp.get("/confirmation/<reference>")
 def confirmation(reference):
-    if not _placed_here(reference):
-        abort(404)
+    _abort_unless_placed_here(reference)
 
     try:
         order = get_api_client().get_order(reference)
@@ -254,8 +266,7 @@ def confirmation(reference):
 
 @bp.get("/<reference>/document")
 def document(reference):
-    if not _placed_here(reference):
-        abort(404)
+    _abort_unless_placed_here(reference)
 
     try:
         copy = get_api_client().get_order_document(reference)

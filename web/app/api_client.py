@@ -5,11 +5,16 @@ and templates receive plain dictionaries and know nothing about httpx or HTTP
 status codes.
 """
 
+import logging
 from dataclasses import dataclass
 
 import httpx
 from flask import current_app
 from werkzeug.http import parse_options_header
+
+from app.logs import REQUEST_ID_HEADER, current_request_id
+
+log = logging.getLogger(__name__)
 
 # RFC 9457 "type" values the API returns. They are stable identifiers, which is
 # why errors are told apart by type and not by status: a 404 from POST /orders
@@ -130,15 +135,17 @@ class LandRegistryApiClient:
 
     def _send(self, method, path, accept="application/json", **kwargs):
         url = f"{self._base_url}{path}"
+        headers = {"Accept": accept}
+        request_id = current_request_id()
+        if request_id != "-":
+            # The API logs under the same id, so one search finds both sides.
+            headers[REQUEST_ID_HEADER] = request_id
         try:
-            return httpx.request(
-                method,
-                url,
-                timeout=self._timeout,
-                headers={"Accept": accept},
-                **kwargs,
-            )
+            return httpx.request(method, url, timeout=self._timeout, headers=headers, **kwargs)
         except httpx.RequestError as error:
+            # Until now the page showed "service unavailable" and nothing was
+            # recorded anywhere: this says which call failed and why.
+            log.warning("API unreachable: %s %s failed with %s", method, url, type(error).__name__)
             raise ApiError(f"Could not reach the API: {error}") from error
 
     def _json_or_raise(self, response):
@@ -147,6 +154,7 @@ class LandRegistryApiClient:
         try:
             return response.json()
         except ValueError as error:
+            log.error("API returned a body that is not JSON for %s", response.request.url)
             raise ApiError("The API returned a body that is not JSON") from error
 
 
@@ -169,6 +177,15 @@ def _error_from(response):
     if problem_type == _ORDER_NOT_PAID:
         return OrderNotPaid(problem.get("reference"))
 
+    # Expected problems (unknown title, validation, unpaid order) were turned
+    # into their own exceptions above and are not logged: they are answers, not
+    # faults. Anything reaching this line is.
+    log.error(
+        "Unexpected API response %s for %s %s",
+        response.status_code,
+        response.request.method,
+        response.request.url,
+    )
     return ApiError(f"The API answered {response.status_code} for {response.request.url}")
 
 
