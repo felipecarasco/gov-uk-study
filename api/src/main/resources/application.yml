@@ -26,3 +26,9 @@ management:
   endpoint:
     health:
       show-details: always
+
+logging:
+  pattern:
+    # Spring Boot's console pattern reserves a slot for a correlation id; this
+    # fills it with the request id from RequestIdFilter.
+    correlation: "[%X{requestId:-}] "
