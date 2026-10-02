@@ -18,6 +18,11 @@ def create_app(config_overrides=None):
     if not (app.debug or app.testing) and app.config["SECRET_KEY"] == DEV_ONLY_SECRET_KEY:
         raise RuntimeError("Set SECRET_KEY: the development key must not sign real sessions")
 
+    # Before anything touches app.logger, so Flask does not install its own handler.
+    from app.logs import configure_logging
+
+    configure_logging(app)
+
     # The GOV.UK macros live inside the installed packages, not in app/templates.
     # PrefixLoader maps the path prefix ("govuk_frontend_jinja/...") to the
     # matching package; ChoiceLoader tries the app's own templates first.

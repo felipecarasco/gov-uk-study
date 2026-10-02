@@ -16,5 +16,9 @@ class Config:
     # OpenShift route; False by default so that plain http://localhost works.
     SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "false").lower() == "true"
 
+    # "text" for development, "json" in containers (see web/Dockerfile).
+    LOG_FORMAT = os.environ.get("LOG_FORMAT", "text")
+    LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
+
     # Service name, shown in the GOV.UK header.
     SERVICE_NAME = "Search the land register"
