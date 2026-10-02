@@ -1,5 +1,7 @@
 package uk.gov.study.landregistry.order;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import uk.gov.study.landregistry.title.TitleDetail;
 import uk.gov.study.landregistry.title.TitleNotFoundException;
@@ -10,6 +12,8 @@ import java.time.temporal.ChronoUnit;
 
 @Service
 public class OrderService {
+
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
     // £3.00, the fixed fee for an official copy in v1.
     private static final long PRICE_PENCE = 300L;
@@ -52,6 +56,14 @@ public class OrderService {
                 null);
 
         orders.insert(order);
+
+        // Only the reference and what was ordered: never the applicant's name,
+        // email or address. The key-value pairs become fields in the JSON logs.
+        log.atInfo()
+                .addKeyValue("reference", order.reference())
+                .addKeyValue("titleNumber", order.titleNumber())
+                .addKeyValue("documentType", order.documentType())
+                .log("Order {} created for title {}", order.reference(), order.titleNumber());
         return order;
     }
 
@@ -61,7 +73,10 @@ public class OrderService {
      * take the money twice.
      */
     public RegisterOrder pay(String reference) {
-        orders.markPaid(reference, Instant.now().truncatedTo(ChronoUnit.MICROS));
+        boolean paidNow = orders.markPaid(reference, Instant.now().truncatedTo(ChronoUnit.MICROS));
+        if (paidNow) {
+            log.atInfo().addKeyValue("reference", reference).log("Order {} paid", reference);
+        }
         // Whether or not this call was the one that paid, the order as stored is
         // the answer; an unknown reference throws OrderNotFoundException here.
         return findByReference(reference);
@@ -79,6 +94,11 @@ public class OrderService {
         }
         TitleDetail title = titles.findByTitleNumber(order.titleNumber())
                 .orElseThrow(() -> new TitleNotFoundException(order.titleNumber()));
+
+        log.atInfo()
+                .addKeyValue("reference", order.reference())
+                .addKeyValue("documentType", order.documentType())
+                .log("Copy issued for order {}", order.reference());
 
         String kind = order.documentType() == DocumentType.TITLE_REGISTER ? "title-register" : "title-plan";
         return new OfficialCopy(order.reference() + "-" + kind + ".pdf", renderer.render(order, title));

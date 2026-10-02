@@ -51,6 +51,11 @@ EXPOSE 8080
 HEALTHCHECK --interval=10s --timeout=3s --start-period=40s --retries=3 \
   CMD curl -fsS http://127.0.0.1:8080/actuator/health | grep -q '"status":"UP"'
 
+# Logs as JSON in the Elastic Common Schema, the format OpenShift's log
+# collectors ingest; the request id from RequestIdFilter becomes the requestId
+# field. Locally, without this, logs stay as readable text.
+ENV LOGGING_STRUCTURED_FORMAT_CONSOLE=ecs
+
 # -XX:MaxRAMPercentage rather than -Xmx: in a container the memory limit comes
 # from the cgroup, not the host, and the JVM must size the heap from it.
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "app.jar"]
